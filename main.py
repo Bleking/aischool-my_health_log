@@ -25,6 +25,37 @@ class RecordIn(BaseModel):
     memo: str = ""  # (선택 사항)
 
 # BMI 계산
+def calculate_bmi(height, weight):
+    height_m = record.height / 100
+    bmi = record.weight / (height_m**2)
+
+    # Determine BMI classification
+    if bmi >= 25:
+        bmi_category = "비만"
+    elif bmi >= 23:
+        bmi_category = "과체중"
+    elif bmi >= 18.5:
+        bmi_category = "정상"
+    else:
+        bmi_category = "저체중"
+
+    # 혈압
+    if record.systolic >= 140 or record.diastolic >= 90:
+        blood_pressure_warning = "고혈압"
+    elif record.systolic >= 120 or record.diastolic >= 80:
+        blood_pressure_warning = "주의"
+    else:
+        blood_pressure_warning = "정상"
+
+    # 공복 혈당
+    if record.blood_sugar >= 126:
+        blood_sugar_warning = "당뇨 의심"
+    elif record.blood_sugar >= 100:
+        blood_sugar_warning = "공복혈당장애"
+    else:
+        blood_sugar_warning = "정상"
+        
+    return bmi_category, blood_pressure_warning, blood_sugar_warning
 
 
 @app.get("/")
@@ -35,26 +66,45 @@ def read_root():
 # 건강 기록 추가. 저장 후 BMI·분류·경고를 계산해 응답
 @app.post("/records")
 def save_records(record: RecordIn):
-    today = datetime.datetime.strptime(record.date, "%Y-%m-%d").date()
-    cursor.execute(
-        """INSERT INTO my_health (
-            date, weight, height, systolic, diastolic, blood_sugar, steps, sleep_hours, memo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            today,
-            record.weight,
-            record.height,
-            record.systolic,
-            record.diastolic,
-            record.blood_sugar,
-            record.steps,
-            record.sleep_hours,
-            record.memo,
-        ),
-    )
-    conn.commit()
+    # Create a new connection and cursor for this thread/request
+    local_conn = sqlite3.connect('healthcare.db')
+    local_cursor = local_conn.cursor()
+
+    date_obj = datetime.datetime.strptime(record.date, "%Y-%m-%d").date()
     
-    return {"message": "건강 수치 저장 완료"}
+    try:
+        # Insert data into the database using the local cursor
+        local_cursor.execute(
+            """INSERT INTO my_health (
+                date, weight, height, systolic, diastolic, blood_sugar, steps, sleep_hours, memo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                date_obj,
+                record.weight,
+                record.height,
+                record.systolic,
+                record.diastolic,
+                record.blood_sugar,
+                record.steps,
+                record.sleep_hours,
+                record.memo,
+            ),
+        )
+        local_conn.commit()
+
+        # BMI 계산
+        bmi_category, blood_pressure_warning, blood_sugar_warning = calculate_bmi(record.height, record.weight)
+        
+        return {
+            "message": "건강 수치 저장 완료",
+            "bmi": round(bmi, 2),
+            "bmi_category": bmi_category,
+            "blood_pressure_warning": blood_pressure_warning, 
+            "blood_sugar_warning": blood_sugar_warning, 
+        }
+    finally:
+        # Ensure the connection is closed
+        local_conn.close()
 
 
 # 전체 기록 조회 (개수 포함)
