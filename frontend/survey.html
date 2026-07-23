@@ -2,22 +2,16 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>건강 기록 입력</title>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             min-height: 100vh;
             margin: 0;
             padding: 40px 20px;
-
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -31,6 +25,14 @@
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.16);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 { margin-top: 0; }
+
+        .description {
+            margin-bottom: 28px;
+            line-height: 1.6;
         }
 
         .form-group {
@@ -44,6 +46,12 @@
             font-weight: bold;
         }
 
+        .optional {
+            font-size: 13px;
+            font-weight: normal;
+            opacity: 0.85;
+        }
+
         input {
             width: 100%;
             padding: 13px 14px;
@@ -52,13 +60,8 @@
             outline: none;
             font-size: 16px;
         }
-        input:focus {
-            border: 2px solid #ffffff;
-        }
 
-        h1 {
-            margin-top: 0;
-        }
+        input:focus { border: 2px solid #ffffff; }
 
         button {
             width: 100%;
@@ -66,20 +69,31 @@
             padding: 14px;
             border: none;
             border-radius: 10px;
-
             font-size: 17px;
             font-weight: bold;
             cursor: pointer;
-
             background: white;
             color: #5b4bb7;
         }
-        button:hover {
-            background: #f1efff;
-        }
+
+        button:hover { background: #f1efff; }
+
         button:disabled {
             cursor: not-allowed;
             opacity: 0.65;
+        }
+
+        #logout-button {
+            margin-top: 14px;
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        #message {
+            min-height: 24px;
+            margin-top: 16px;
+            text-align: center;
         }
     </style>
 </head>
@@ -87,130 +101,183 @@
 <body>
     <main class="survey-container">
         <h1>건강 기록 입력</h1>
-
         <p id="welcome-message"></p>
 
-        <p>
-            이 영역에 몸무게, 키, 혈압, 혈당 등의
-            입력 폼을 추가하면 됩니다.
+        <p class="description">
+            필수 건강 수치를 입력하면 BMI, 혈압, 공복 혈당 상태를 확인할 수 있습니다.
         </p>
+
         <form id="survey-form">
             <div class="form-group">
-                <label for="weight">몸무게</label>
-                <input
-                    id="weight"
-                    name="weight"
-                    type="number"
-                    placeholder=""
-                    autocomplete="weight"
-                    required
-                >
-            </div>
-            <div class="form-group">
-                <label for="height">키</label>
-                <input
-                    id="height"
-                    name="height"
-                    type="number"
-                    placeholder=""
-                    autocomplete="height"
-                    required
-                >
-            </div>
-            <div class="form-group">
-                <label for="systolic">수축기 혈압</label>
-                <input
-                    id="systolic"
-                    name="systolic"
-                    type="number"
-                    placeholder=""
-                    autocomplete="systolic"
-                    required
-                >
-            </div>
-            <div class="form-group">
-                <label for="diastolic">이완기 혈압</label>
-                <input
-                    id="diastolic"
-                    name="diastolic"
-                    type="number"
-                    placeholder=""
-                    autocomplete="diastolic"
-                    required
-                >
-            </div>
-            <div class="form-group">
-                <label for="blood_sugar">공복 혈당</label>
-                <input
-                    id="blood_sugar"
-                    name="blood_sugar"
-                    type="number"
-                    placeholder=""
-                    autocomplete="blood_sugar"
-                    required
-                >
+                <label for="weight">몸무게 (kg)</label>
+                <input id="weight" name="weight" type="number"
+                       min="1" max="500" step="0.1"
+                       placeholder="예: 70.5" required>
             </div>
 
             <div class="form-group">
-                <label for="steps">(선택) 걸은 횟수</label>
-                <input
-                    id="steps"
-                    name="steps"
-                    type="number"
-                    placeholder=""
-                    autocomplete="steps"
-                    required
-                >
-            </div>
-            <div class="form-group">
-                <label for="sleep_hours">(선택) 수면 시간</label>
-                <input
-                    id="sleep_hours"
-                    name="sleep_hours"
-                    type="number"
-                    placeholder=""
-                    autocomplete="sleep_hours"
-                    required
-                >
-            </div>
-            <div class="form-group">
-                <label for="memo">(선택) 메모</label>
-                <input
-                    id="memo"
-                    name="memo"
-                    type="string"
-                    placeholder=""
-                    autocomplete="memo"
-                    required
-                >
+                <label for="height">키 (cm)</label>
+                <input id="height" name="height" type="number"
+                       min="30" max="250" step="0.1"
+                       placeholder="예: 175" required>
             </div>
 
-            <button id="submit-button" type="submit">
-                제출 하기
-            </button>
+            <div class="form-group">
+                <label for="systolic">수축기 혈압 (mmHg)</label>
+                <input id="systolic" name="systolic" type="number"
+                       min="40" max="300" step="1"
+                       placeholder="예: 120" required>
+            </div>
+
+            <div class="form-group">
+                <label for="diastolic">이완기 혈압 (mmHg)</label>
+                <input id="diastolic" name="diastolic" type="number"
+                       min="20" max="200" step="1"
+                       placeholder="예: 80" required>
+            </div>
+
+            <div class="form-group">
+                <label for="blood_sugar">공복 혈당 (mg/dL)</label>
+                <input id="blood_sugar" name="blood_sugar" type="number"
+                       min="20" max="1000" step="1"
+                       placeholder="예: 95" required>
+            </div>
+
+            <div class="form-group">
+                <label for="steps">
+                    걸음 수 <span class="optional">(선택)</span>
+                </label>
+                <input id="steps" name="steps" type="number"
+                       min="0" step="1" placeholder="예: 8000">
+            </div>
+
+            <div class="form-group">
+                <label for="sleep_hours">
+                    수면 시간 <span class="optional">(선택)</span>
+                </label>
+                <input id="sleep_hours" name="sleep_hours" type="number"
+                       min="0" max="24" step="0.1" placeholder="예: 7.5">
+            </div>
+
+            <div class="form-group">
+                <label for="memo">
+                    메모 <span class="optional">(선택)</span>
+                </label>
+                <input id="memo" name="memo" type="text"
+                       maxlength="300" placeholder="특이사항을 입력하세요">
+            </div>
+
+            <button id="submit-button" type="submit">제출하기</button>
         </form>
-        
-        <button id="logout-button" type="button">
-            로그아웃
-        </button>
+
+        <p id="message"></p>
+        <button id="logout-button" type="button">로그아웃</button>
     </main>
 
     <script>
         const memberId = sessionStorage.getItem("member_id");
         const memberName = sessionStorage.getItem("member_name");
 
-        /*
-         * 로그인 정보 없이 /survey 주소로 직접 접근한 경우
-         * 로그인 화면으로 되돌립니다.
-         */
         if (!memberId || !memberName) {
             alert("로그인이 필요합니다.");
             window.location.href = "/";
         } else {
-            document.getElementById(
-                "welcome-message"
-            ).textContent = `${memberName}님, 환영합니다.`;
+            document.getElementById("welcome-message").textContent =
+                `${memberName}님, 건강 수치를 입력해주세요.`;
         }
+
+        function getLocalDateString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, "0");
+            const day = String(now.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+        }
+
+        function readOptionalNumber(id, defaultValue) {
+            const raw = document.getElementById(id).value.trim();
+            return raw === "" ? defaultValue : Number(raw);
+        }
+
+        const surveyForm = document.getElementById("survey-form");
+        const submitButton = document.getElementById("submit-button");
+        const messageElement = document.getElementById("message");
+
+        surveyForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            if (!surveyForm.reportValidity()) {
+                return;
+            }
+
+            const payload = {
+                member_id: Number(memberId),
+                date: getLocalDateString(),
+                weight: Number(document.getElementById("weight").value),
+                height: Number(document.getElementById("height").value),
+                systolic: Number(document.getElementById("systolic").value),
+                diastolic: Number(document.getElementById("diastolic").value),
+                blood_sugar: Number(document.getElementById("blood_sugar").value),
+                steps: readOptionalNumber("steps", 0),
+                sleep_hours: readOptionalNumber("sleep_hours", 0.0),
+                memo: document.getElementById("memo").value.trim()
+            };
+
+            submitButton.disabled = true;
+            submitButton.textContent = "저장 중...";
+            messageElement.textContent = "";
+
+            try {
+                const response = await fetch(`/records/${memberId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const detail = Array.isArray(result.detail)
+                        ? result.detail.map(item => item.msg).join("\n")
+                        : result.detail;
+
+                    throw new Error(detail || "건강 기록 저장에 실패했습니다.");
+                }
+
+                const resultData = {
+                    member_id: Number(memberId),
+                    member_name: memberName,
+                    date: payload.date,
+                    weight: payload.weight,
+                    height: payload.height,
+                    systolic: payload.systolic,
+                    diastolic: payload.diastolic,
+                    blood_sugar: payload.blood_sugar,
+                    bmi: result.bmi,
+                    bmi_category: result.bmi_category,
+                    blood_pressure_warning: result.blood_pressure_warning,
+                    blood_sugar_warning: result.blood_sugar_warning
+                };
+
+                sessionStorage.setItem(
+                    "health_result",
+                    JSON.stringify(resultData)
+                );
+
+                window.location.href = "/result";
+
+            } catch (error) {
+                console.error(error);
+                messageElement.textContent = error.message;
+                alert(error.message);
+
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = "제출하기";
+            }
+        });
 
         document
             .getElementById("logout-button")
