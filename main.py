@@ -92,24 +92,86 @@ def normalize_phone_no(number: str):
 @app.get("/")
 def read_root():
     print("Fast API 실행 완료")
-    return FileResponse("./frontend/index.html")
+    return FileResponse(FRONTEND_DIR / "index.html")
 
 # 회원 가입
-@app.post("/users")
-def create_user(user: UserIn):
+@app.post("/auth")
+def authenticate_user(login: LoginIn):
+    name = login.name.strip()
+    phone_no = normalize_phone_number(login.phone_no)
+
+    if not name:
+        raise HTTPException(
+            status_code=400,
+            detail="이름을 입력해주세요.",
+        )
+
+    if len(phone_no) not in (10, 11):
+        raise HTTPException(
+            status_code=400,
+            detail="올바른 전화번호를 입력해주세요.",
+        )
+
     local_conn = sqlite3.connect(DB_PATH)
+    local_conn.row_factory = sqlite3.Row
     local_cursor = local_conn.cursor()
 
     try:
+        # 기존에 하이픈을 포함해 저장된 데이터도 함께 검색
         local_cursor.execute(
-            """INSERT INTO users (is_admin, name, phone_no) VALUES (?, ?, ?)""",
-            (user.is_admin, user.name, user.phone_no),
+            """
+            SELECT member_id, name, phone_no, is_admin
+            FROM users
+            WHERE REPLACE(REPLACE(phone_no, '-', ''), ' ', '') = ?
+            """,
+            (phone_no,),
         )
-        local_conn.commit()
-        new_user_id = local_cursor.lastrowid # Get the ID of the newly created user
-        return {"message": "회원 가입 완료", "user_id": new_user_id} # Return user_id
+
+        existing_user = local_cursor.fetchone()
+
+        # 1. 전화번호가 없으면 신규 회원 등록
+        if existing_user is None:
+            local_cursor.execute(
+                """
+                INSERT INTO users (is_admin, name, phone_no)
+                VALUES (?, ?, ?)
+                """,
+                (False, name, phone_no),
+            )
+
+            local_conn.commit()
+            member_id = local_cursor.lastrowid
+
+            return {
+                "status": "signup",
+                "message": "회원가입이 완료되었습니다.",
+                "member_id": member_id,
+                "name": name,
+                "is_admin": False,
+            }
+
+        # 2. 전화번호는 있지만 이름이 다르면 로그인 거부
+        if existing_user["name"].strip() != name:
+            raise HTTPException(
+                status_code=409,
+                detail="이미 존재하는 회원입니다.",
+            )
+
+        # 3. 전화번호와 이름이 모두 일치하면 로그인 성공
+        return {
+            "status": "login",
+            "message": "로그인에 성공했습니다.",
+            "member_id": existing_user["member_id"],
+            "name": existing_user["name"],
+            "is_admin": bool(existing_user["is_admin"]),
+        }
+
     finally:
         local_conn.close()
+
+@app.get("/survey", include_in_schema=False)
+def serve_survey_page():
+    return FileResponse(FRONTEND_DIR / "survey.html")
 
 # 건강 기록 추가. 저장 후 BMI·분류·경고를 계산해 응답
 @app.post("/records/{member_id}")
