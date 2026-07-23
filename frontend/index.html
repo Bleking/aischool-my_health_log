@@ -222,11 +222,41 @@
 
                 if (result.status === "signup") {
                     alert("회원가입이 완료되었습니다.");
-                } else {
+                }
+                else {
                     alert("로그인에 성공했습니다.");
                 }
+                
+                if result.is_admin === true {
+                    window.location.href = "/admin";
+                }
+                else {
+                    window.location.href = "/survey";
+                }
 
-                window.location.href = "/survey";
+                // 로그인 사용자 정보 저장
+                sessionStorage.setItem(
+                    "user_id",
+                    String(result.user_id)
+                );
+                
+                sessionStorage.setItem(
+                    "user_name",
+                    result.name
+                );
+                
+                sessionStorage.setItem(
+                    "is_admin",
+                    String(result.is_admin)
+                );
+                
+                // 관리자와 일반 회원의 이동 경로 분리
+                if (result.is_admin === true) {
+                    window.location.href = "/admin";
+                }
+                else {
+                    window.location.href = "/survey";
+                }
 
             }
             catch (error) {
