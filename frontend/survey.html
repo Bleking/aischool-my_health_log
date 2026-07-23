@@ -19,18 +19,41 @@
             padding: 40px 20px;
 
             font-family: Arial, sans-serif;
-            background: #f5f7fb;
-            color: #222;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
         }
 
-        .container {
+        .survey-container {
             width: 100%;
             max-width: 700px;
             margin: 0 auto;
             padding: 32px;
             border-radius: 16px;
-            background: white;
+            background: rgba(255, 255, 255, 0.16);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            outline: none;
+            font-size: 16px;
+        }
+        input:focus {
+            border: 2px solid #ffffff;
         }
 
         h1 {
@@ -38,16 +61,31 @@
         }
 
         button {
-            padding: 11px 18px;
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
+
+            font-size: 17px;
+            font-weight: bold;
             cursor: pointer;
+
+            background: white;
+            color: #5b4bb7;
+        }
+        button:hover {
+            background: #f1efff;
+        }
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
         }
     </style>
 </head>
 
 <body>
-    <main class="container">
+    <main class="survey-container">
         <h1>건강 기록 입력</h1>
 
         <p id="welcome-message"></p>
@@ -56,7 +94,102 @@
             이 영역에 몸무게, 키, 혈압, 혈당 등의
             입력 폼을 추가하면 됩니다.
         </p>
+        <form id="survey-form">
+            <div class="form-group">
+                <label for="weight">몸무게</label>
+                <input
+                    id="weight"
+                    name="weight"
+                    type="number"
+                    placeholder=""
+                    autocomplete="weight"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="height">키</label>
+                <input
+                    id="height"
+                    name="height"
+                    type="number"
+                    placeholder=""
+                    autocomplete="height"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="systolic">수축기 혈압</label>
+                <input
+                    id="systolic"
+                    name="systolic"
+                    type="number"
+                    placeholder=""
+                    autocomplete="systolic"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="diastolic">이완기 혈압</label>
+                <input
+                    id="diastolic"
+                    name="diastolic"
+                    type="number"
+                    placeholder=""
+                    autocomplete="diastolic"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="blood_sugar">공복 혈당</label>
+                <input
+                    id="blood_sugar"
+                    name="blood_sugar"
+                    type="number"
+                    placeholder=""
+                    autocomplete="blood_sugar"
+                    required
+                >
+            </div>
 
+            <div class="form-group">
+                <label for="steps">(선택) 걸은 횟수</label>
+                <input
+                    id="steps"
+                    name="steps"
+                    type="number"
+                    placeholder=""
+                    autocomplete="steps"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="sleep_hours">(선택) 수면 시간</label>
+                <input
+                    id="sleep_hours"
+                    name="sleep_hours"
+                    type="number"
+                    placeholder=""
+                    autocomplete="sleep_hours"
+                    required
+                >
+            </div>
+            <div class="form-group">
+                <label for="memo">(선택) 메모</label>
+                <input
+                    id="memo"
+                    name="memo"
+                    type="string"
+                    placeholder=""
+                    autocomplete="memo"
+                    required
+                >
+            </div>
+
+            <button id="submit-button" type="submit">
+                제출 하기
+            </button>
+        </form>
+        
         <button id="logout-button" type="button">
             로그아웃
         </button>
