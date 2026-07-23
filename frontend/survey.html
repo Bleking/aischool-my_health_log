@@ -163,7 +163,7 @@
                 <label for="memo">
                     메모 <span class="optional">(선택)</span>
                 </label>
-                <input id="memo" name="memo" type="text"
+                <input id="memo" name="memo" type="string"
                        maxlength="300" placeholder="특이사항을 입력하세요">
             </div>
 
@@ -175,15 +175,15 @@
     </main>
 
     <script>
-        const memberId = sessionStorage.getItem("member_id");
-        const memberName = sessionStorage.getItem("member_name");
+        const user_id = sessionStorage.getItem("user_id");
+        const userName = sessionStorage.getItem("user_name");
 
-        if (!memberId || !memberName) {
+        if (!userId || !userName) {
             alert("로그인이 필요합니다.");
             window.location.href = "/";
         } else {
             document.getElementById("welcome-message").textContent =
-                `${memberName}님, 건강 수치를 입력해주세요.`;
+                `${userName}님, 건강 수치를 입력해주세요.`;
         }
 
         function getLocalDateString() {
@@ -211,7 +211,7 @@
             }
 
             const payload = {
-                member_id: Number(memberId),
+                user_id: Number(userId),
                 date: getLocalDateString(),
                 weight: Number(document.getElementById("weight").value),
                 height: Number(document.getElementById("height").value),
@@ -228,7 +228,7 @@
             messageElement.textContent = "";
 
             try {
-                const response = await fetch(`/records/${memberId}`, {
+                const response = await fetch(`/records/${userId}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -247,8 +247,8 @@
                 }
 
                 const resultData = {
-                    member_id: Number(memberId),
-                    member_name: memberName,
+                    user_id: Number(userId),
+                    user_name: userName,
                     date: payload.date,
                     weight: payload.weight,
                     height: payload.height,
