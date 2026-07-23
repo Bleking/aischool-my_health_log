@@ -2,18 +2,247 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>My First Docker Web</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>마이 헬스 로그</title>
+
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white; text-align: center; padding: 100px 20px;
+        * {
+            box-sizing: border-box;
         }
-    h1 { font-size: 48px; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 430px;
+            padding: 40px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.16);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 34px;
+            text-align: center;
+        }
+
+        .description {
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        input:focus {
+            border: 2px solid #ffffff;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+
+            background: white;
+            color: #5b4bb7;
+        }
+
+        button:hover {
+            background: #f1efff;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        #message {
+            min-height: 24px;
+            margin-top: 18px;
+            text-align: center;
+        }
     </style>
 </head>
+
 <body>
-    <h1>인공지능사관학교 헬스케어 실습</h1>
-    <p>전화번호와 이름을 입력하세요.</p>
+    <main class="login-container">
+        <h1>마이 헬스 로그</h1>
+
+        <p class="description">
+            전화번호와 이름을 입력하세요.<br>
+            처음 이용하는 경우 자동으로 회원가입됩니다.
+        </p>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="name">이름</label>
+                <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="이름을 입력하세요"
+                    autocomplete="name"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="phone-no">전화번호</label>
+                <input
+                    id="phone-no"
+                    name="phone_no"
+                    type="tel"
+                    placeholder="010-1234-5678"
+                    autocomplete="tel"
+                    required
+                >
+            </div>
+
+            <button id="login-button" type="submit">
+                시작하기
+            </button>
+        </form>
+
+        <p id="message"></p>
+    </main>
+
+    <script>
+        const loginForm = document.getElementById("login-form");
+        const loginButton = document.getElementById("login-button");
+        const messageElement = document.getElementById("message");
+
+        loginForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const name = document
+                .getElementById("name")
+                .value
+                .trim();
+
+            const phoneNo = document
+                .getElementById("phone-no")
+                .value
+                .replace(/\D/g, "");
+
+            if (!name) {
+                alert("이름을 입력해주세요.");
+                return;
+            }
+
+            if (phoneNo.length !== 10 && phoneNo.length !== 11) {
+                alert("올바른 전화번호를 입력해주세요.");
+                return;
+            }
+
+            loginButton.disabled = true;
+            loginButton.textContent = "확인 중...";
+            messageElement.textContent = "";
+
+            try {
+                const response = await fetch("/auth", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        phone_no: phoneNo
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    alert(
+                        result.detail ||
+                        "로그인 처리 중 오류가 발생했습니다."
+                    );
+                    return;
+                }
+
+                /*
+                 * 새로고침이나 survey.html 이동 후에도 사용할 수 있도록
+                 * 회원 정보를 현재 브라우저 탭에 저장합니다.
+                 */
+                sessionStorage.setItem(
+                    "member_id",
+                    String(result.member_id)
+                );
+
+                sessionStorage.setItem(
+                    "member_name",
+                    result.name
+                );
+
+                sessionStorage.setItem(
+                    "is_admin",
+                    String(result.is_admin)
+                );
+
+                if (result.status === "signup") {
+                    alert("회원가입이 완료되었습니다.");
+                } else {
+                    alert("로그인에 성공했습니다.");
+                }
+
+                window.location.href = "/survey";
+
+            }
+            catch (error) {
+                console.error(error);
+
+                alert(
+                    "서버에 연결할 수 없습니다. " +
+                    "FastAPI가 실행 중인지 확인해주세요."
+                );
+
+            }
+            finally {
+                loginButton.disabled = false;
+                loginButton.textContent = "시작하기";
+            }
+        });
+    </script>
 </body>
 </html>
