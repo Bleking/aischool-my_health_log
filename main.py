@@ -15,7 +15,7 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 DB_PATH = DATA_DIR / "healthcare.db"
 
 # DB 불러오기
-conn = sqlite3.connect('healthcare.db')
+conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 
 app = FastAPI(title="마이 헬스 로그 API", version="1.0")
