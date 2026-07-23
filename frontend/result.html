@@ -156,11 +156,11 @@
     </main>
 
     <script>
-        const memberId = sessionStorage.getItem("member_id");
-        const memberName = sessionStorage.getItem("member_name");
+        const userId = sessionStorage.getItem("user_id");
+        const userName = sessionStorage.getItem("user_name");
         const storedResult = sessionStorage.getItem("health_result");
 
-        if (!memberId || !memberName) {
+        if (!userId || !userName) {
             alert("로그인이 필요합니다.");
             window.location.href = "/";
         } else if (!storedResult) {
@@ -171,7 +171,7 @@
                 const result = JSON.parse(storedResult);
 
                 document.getElementById("summary").textContent =
-                    `${result.member_name}님의 건강 기록이 정상적으로 저장되었습니다.`;
+                    `${result.user_name}님의 건강 기록이 정상적으로 저장되었습니다.`;
 
                 document.getElementById("bmi-value").textContent =
                     Number(result.bmi).toFixed(2);
