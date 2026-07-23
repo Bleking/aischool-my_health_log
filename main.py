@@ -32,7 +32,7 @@ class UserIn(BaseModel):
     phone_no: str
 
 class RecordIn(BaseModel):
-    member_id: int  # 회원 정보
+    user_id: int  # 회원 정보
     date: str
     weight: float
     height: float
@@ -44,7 +44,7 @@ class RecordIn(BaseModel):
     memo: str = ""
 
 class ResultIn(BaseModel):
-    member_id: int  # 회원 정보
+    user_id: int  # 회원 정보
     record_id: int
     bmi_value: int
     bmi_category: str
@@ -120,7 +120,7 @@ def authenticate_user(login: UserIn):
         # 기존에 하이픈을 포함해 저장된 데이터도 함께 검색
         local_cursor.execute(
             """
-            SELECT member_id, name, phone_no, is_admin
+            SELECT user_id, name, phone_no, is_admin
             FROM users
             WHERE REPLACE(REPLACE(phone_no, '-', ''), ' ', '') = ?
             """,
@@ -140,12 +140,12 @@ def authenticate_user(login: UserIn):
             )
 
             local_conn.commit()
-            member_id = local_cursor.lastrowid
+            user_id = local_cursor.lastrowid
 
             return {
                 "status": "signup",
                 "message": "회원가입이 완료되었습니다.",
-                "member_id": member_id,
+                "user_id": user_id,
                 "name": name,
                 "is_admin": False,
             }
@@ -161,7 +161,7 @@ def authenticate_user(login: UserIn):
         return {
             "status": "login",
             "message": "로그인에 성공했습니다.",
-            "member_id": existing_user["member_id"],
+            "user_id": existing_user["user_id"],
             "name": existing_user["name"],
             "is_admin": bool(existing_user["is_admin"]),
         }
@@ -174,8 +174,8 @@ def serve_survey_page():
     return FileResponse(FRONTEND_DIR / "survey.html")
 
 # 건강 기록 추가. 저장 후 BMI·분류·경고를 계산해 응답
-@app.post("/records/{member_id}")
-def save_records(member_id: int, record: RecordIn):
+@app.post("/records/{user_id}")
+def save_records(user_id: int, record: RecordIn):
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
@@ -183,15 +183,15 @@ def save_records(member_id: int, record: RecordIn):
 
     try:
         # 건강 기록 입력하는 회원 정보
-        record.member_id = member_id
+        record.user_id = user_id
         
         local_cursor.execute(
             """INSERT INTO health_records (
-                date, member_id, weight, height, systolic, diastolic, blood_sugar, steps, sleep_hours, memo
+                date, user_id, weight, height, systolic, diastolic, blood_sugar, steps, sleep_hours, memo
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 date_obj,
-                record.member_id,
+                record.user_id,
                 record.weight, record.height,
                 record.systolic, record.diastolic, record.blood_sugar,
                 record.steps, record.sleep_hours, record.memo,
@@ -203,7 +203,7 @@ def save_records(member_id: int, record: RecordIn):
         bmi, bmi_category, blood_pressure_warning, blood_sugar_warning = calculate_bmi(record)
 
         return {
-            "message": f"회원 {record.member_id} 건강 수치 저장 완료",
+            "message": f"회원 {record.user_id} 건강 수치 저장 완료",
             "bmi": round(bmi, 2),
             "bmi_category": bmi_category,
             "blood_pressure_warning": blood_pressure_warning,
@@ -236,40 +236,40 @@ async def get_all_records():
         local_conn.close()
 
 # 회원 한 명에 대한 기록 조회. 없으면 404 반환
-@app.get("/records/{member_id}")
-def get_one_record(member_id):
+@app.get("/records/{user_id}")
+def get_one_record(user_id):
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute( """SELECT * FROM health_records WHERE member_id = ?""", (member_id,))
+        local_cursor.execute( """SELECT * FROM health_records WHERE user_id = ?""", (user_id,))
         local_conn.commit()
 
-        return {"message": f"회원 {member_id}에 대한 건강 기록 불러오기 완료"}
+        return {"message": f"회원 {user_id}에 대한 건강 기록 불러오기 완료"}
     finally:
         local_conn.close()
 
 
 # 기록 수정 (한 회원의 기록 한개 수정)
-@app.put("/records/{member_id}/{record_id}")
-def edit_records(member_id: int, record_id: int, record: RecordIn):
+@app.put("/records/{user_id}/{record_id}")
+def edit_records(user_id: int, record_id: int, record: RecordIn):
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
     
     try:
-        record.member_id = member_id
+        record.user_id = user_id
         
         local_cursor.execute(
             """UPDATE health_records SET
                 date = ?, weight = ?, height = ?, systolic = ?, diastolic = ?,
                 blood_sugar = ?, steps = ?, sleep_hours = ?, memo = ?
-            WHERE record_id = ? AND member_id = ?""",
+            WHERE record_id = ? AND user_id = ?""",
             (
                 datetime.datetime.strptime(record.date, "%Y-%m-%d").date(),
                 record.weight, record.height,
                 record.systolic, record.diastolic, record.blood_sugar,
                 record.steps, record.sleep_hours, record.memo,
-                record_id, member_id
+                record_id, user_id
             ),
         )
         local_conn.commit()
@@ -278,7 +278,7 @@ def edit_records(member_id: int, record_id: int, record: RecordIn):
         bmi, bmi_category, blood_pressure_warning, blood_sugar_warning = calculate_bmi(record)
 
         return {
-            "message": f"회원 {member_id}의 기록 {record_id} 수정 완료",
+            "message": f"회원 {user_id}의 기록 {record_id} 수정 완료",
             "bmi": round(bmi, 2),
             "bmi_category": bmi_category,
             "blood_pressure_warning": blood_pressure_warning,
@@ -289,21 +289,21 @@ def edit_records(member_id: int, record_id: int, record: RecordIn):
 
 
 # 기록 삭제 (한 회원의 기록 한개 삭제)
-@app.delete("/records/{member_id}/{record_id}")
-def delete_records(member_id: int, record_id: int):
+@app.delete("/records/{user_id}/{record_id}")
+def delete_records(user_id: int, record_id: int):
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute( """DELETE FROM health_records WHERE record_id = ? AND member_id = ?""", (record_id, member_id))
+        local_cursor.execute( """DELETE FROM health_records WHERE record_id = ? AND user_id = ?""", (record_id, user_id))
         local_conn.commit()
-        return {"message": f"회원 {member_id}의 기록 {record_id} 삭제 완료"}
+        return {"message": f"회원 {user_id}의 기록 {record_id} 삭제 완료"}
     finally:
         local_conn.close()
 
 # (회원, 관리자) 날짜 범위로 검색 (회원은 본인의 정보만 조회 가능)
-@app.get("/search/{member_id}")
-def search_by_dates(member_id: int, start_date: str, end_date: str):  # YYYY-MM-DD
+@app.get("/search/{user_id}")
+def search_by_dates(user_id: int, start_date: str, end_date: str):  # YYYY-MM-DD
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
@@ -313,8 +313,8 @@ def search_by_dates(member_id: int, start_date: str, end_date: str):  # YYYY-MM-
         end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
 
         local_cursor.execute(
-            """SELECT * FROM health_records WHERE member_id = ? AND date BETWEEN ? AND ? ORDER BY date ASC""",
-            (member_id, start_date_obj, end_date_obj)
+            """SELECT * FROM health_records WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date ASC""",
+            (user_id, start_date_obj, end_date_obj)
         )
         records = local_cursor.fetchall()
 
@@ -361,8 +361,8 @@ def search_by_dates(start_date: str, end_date: str):
 
 
 # 특정 회원의 평균 통계 반환
-@app.get("/stats/{member_id}")
-def get_stats(member_id: int):
+@app.get("/stats/{user_id}")
+def get_stats(user_id: int):
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
@@ -371,10 +371,10 @@ def get_stats(member_id: int):
         SELECT 
             AVG(weight), AVG(height), AVG(systolic), AVG(diastolic), AVG(blood_sugar), 
             AVG(steps), AVG(sleep_hours)  
-        FROM health_records WHERE member_id = ?
-        """, (member_id,))
+        FROM health_records WHERE user_id = ?
+        """, (user_id,))
         stats = local_conn.commit()
         
-        return {"message": f"회원 {member_id}에 대한 건강 기록 평균"}
+        return {"message": f"회원 {user_id}에 대한 건강 기록 평균"}
     finally:
         local_conn.close()
