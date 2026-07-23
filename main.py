@@ -32,6 +32,7 @@ class UserIn(BaseModel):
     phone_no: str
 
 class RecordIn(BaseModel):
+    user_id: int
     date: str
     weight: float
     height: float
