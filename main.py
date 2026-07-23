@@ -96,9 +96,9 @@ def read_root():
 
 # 회원 가입
 @app.post("/auth")
-def authenticate_user(login: LoginIn):
+def authenticate_user(login: UserIn):
     name = login.name.strip()
-    phone_no = normalize_phone_number(login.phone_no)
+    phone_no = normalize_phone_no(login.phone_no)
 
     if not name:
         raise HTTPException(
