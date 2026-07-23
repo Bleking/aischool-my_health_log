@@ -177,6 +177,10 @@ def serve_survey_page():
 def serve_result_page():
     return FileResponse(FRONTEND_DIR / "result.html")
 
+@app.get("/admin", include_in_schema=False)
+def serve_admin_page():
+    return FileResponse(FRONTEND_DIR / "admin.html")
+
 # 건강 기록 추가. 저장 후 BMI·분류·경고를 계산해 응답
 @app.post("/records/{user_id}")
 def save_records(user_id: int, record: RecordIn):
