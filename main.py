@@ -32,7 +32,6 @@ class UserIn(BaseModel):
     phone_no: str
 
 class RecordIn(BaseModel):
-    user_id: int  # 회원 정보
     date: str
     weight: float
     height: float
@@ -187,8 +186,6 @@ def save_records(user_id: int, record: RecordIn):
 
     try:
         # 건강 기록 입력하는 회원 정보
-        record.user_id = user_id
-        
         local_cursor.execute(
             """INSERT INTO health_records (
                 date, user_id, weight, height, systolic, diastolic, blood_sugar, steps, sleep_hours, memo
