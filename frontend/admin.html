@@ -6,7 +6,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-    <title>건강 기록 입력</title>
+    <title>건강 기록 관리자 페이</title>
 
     <style>
         * {
@@ -17,6 +17,9 @@
             min-height: 100vh;
             margin: 0;
             padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
 
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -31,6 +34,7 @@
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.16);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            /* backdrop-filter: blur(10px); */
         }
 
         .form-group {
@@ -52,6 +56,14 @@
 
         h1 {
             margin-top: 0;
+        }
+
+        .notice {
+            margin: 24px 0;
+            padding: 20px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            line-height: 1.7;
         }
 
         button {
@@ -81,9 +93,54 @@
 <body>
     <main class="admin-container">
         <h1>관리자 페이지</h1>
+
+        <p id="welcome-message"></p>
+
+        <section class="notice">
+            관리자 로그인이 확인되었습니다.<br>
+            전체 회원 조회 및 관리 기능은 추후 구현됩니다.
+        </section>
+
+        <button id="logout-button" type="button">
+            로그아웃
+        </button>
     </main>
 
     <script>
+        const userId =
+            sessionStorage.getItem("user_id");
+
+        const userName =
+            sessionStorage.getItem("user_name");
+
+        const isAdmin =
+            sessionStorage.getItem("is_admin");
+
+        /*
+         * 로그인하지 않았거나 일반 회원이면
+         * 관리자 페이지 접근 차단
+         */
+        if (!userId || !userName) {
+            alert("로그인이 필요합니다.");
+            window.location.href = "/";
+
+        } else if (isAdmin !== "true") {
+            alert("관리자만 접근할 수 있습니다.");
+            window.location.href = "/survey";
+
+        } else {
+            document.getElementById(
+                "welcome-message"
+            ).textContent =
+                `${userName} 관리자님, 환영합니다.`;
+        }
+
+        document
+            .getElementById("logout-button")
+            .addEventListener("click", () => {
+                sessionStorage.clear();
+                window.location.href = "/";
+            });
     </script>
 </body>
 </html>
