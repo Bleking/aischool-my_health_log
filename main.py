@@ -1,9 +1,18 @@
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import sqlite3
 import datetime
 import math
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+DB_PATH = DATA_DIR / "healthcare.db"
 
 # DB 불러오기
 conn = sqlite3.connect('healthcare.db')
@@ -11,8 +20,11 @@ cursor = conn.cursor()
 
 app = FastAPI(title="마이 헬스 로그 API", version="1.0")
 
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
 records = []  # 파일 저장
 
+# 
 class UserIn(BaseModel):
     is_admin: bool
     name: str
@@ -29,6 +41,7 @@ class RecordIn(BaseModel):
     steps: int = 0
     sleep_hours: float = 0.0
     memo: str = ""
+
 
 # BMI 계산
 def calculate_bmi(record: RecordIn):
@@ -67,12 +80,12 @@ def calculate_bmi(record: RecordIn):
 @app.get("/")
 def read_root():
     print("Fast API 실행 완료")
-    return {"message": "내 헬스 로그 API"}
+    return FileResponse("./frontend/index.html")
 
 # 회원 가입
 @app.post("/users")
 def create_user(user: UserIn):
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
@@ -89,7 +102,7 @@ def create_user(user: UserIn):
 # 건강 기록 추가. 저장 후 BMI·분류·경고를 계산해 응답
 @app.post("/records/{member_id}")
 def save_records(member_id: int, record: RecordIn):
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     date_obj = datetime.datetime.strptime(record.date, "%Y-%m-%d").date()
@@ -129,7 +142,7 @@ def save_records(member_id: int, record: RecordIn):
 # 전체 기록 조회 (모든 회원에 대한)
 @app.get("/records")
 async def get_all_records():
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
     
     try:
@@ -151,11 +164,11 @@ async def get_all_records():
 # 회원 한 명에 대한 기록 조회. 없으면 404 반환
 @app.get("/records/{member_id}")
 def get_one_record(member_id):
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute( """SELECT FROM health_records WHERE member_id = ?""", (member_id))
+        local_cursor.execute( """SELECT * FROM health_records WHERE member_id = ?""", (member_id,))
         local_conn.commit()
 
         return {"message": f"회원 {member_id}에 대한 건강 기록 불러오기 완료"}
@@ -166,7 +179,7 @@ def get_one_record(member_id):
 # 기록 수정 (한 회원의 기록 한개 수정)
 @app.put("/records/{member_id}/{record_id}")
 def edit_records(member_id: int, record_id: int, record: RecordIn):
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
     
     try:
@@ -204,7 +217,7 @@ def edit_records(member_id: int, record_id: int, record: RecordIn):
 # 기록 삭제 (한 회원의 기록 한개 삭제)
 @app.delete("/records/{member_id}/{record_id}")
 def delete_records(member_id: int, record_id: int):
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
@@ -217,7 +230,7 @@ def delete_records(member_id: int, record_id: int):
 # (회원, 관리자) 날짜 범위로 검색 (회원은 본인의 정보만 조회 가능)
 @app.get("/search/{member_id}")
 def search_by_dates(member_id: int, start_date: str, end_date: str):  # YYYY-MM-DD
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
@@ -246,7 +259,7 @@ def search_by_dates(member_id: int, start_date: str, end_date: str):  # YYYY-MM-
 # (관리자용) 날짜 범위로 검색 (관리자는 모든 회원의 정보 조회 가능)
 @app.get("/search")
 def search_by_dates(start_date: str, end_date: str):
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
@@ -255,7 +268,7 @@ def search_by_dates(start_date: str, end_date: str):
         end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
 
         local_cursor.execute(
-            """SELECT * FROM health_records WHERE AND date BETWEEN ? AND ? ORDER BY date ASC""",
+            """SELECT * FROM health_records WHERE date BETWEEN ? AND ? ORDER BY date ASC""",
             (start_date_obj, end_date_obj)
         )
         records = local_cursor.fetchall()
@@ -276,17 +289,18 @@ def search_by_dates(start_date: str, end_date: str):
 # 특정 회원의 평균 통계 반환
 @app.get("/stats/{member_id}")
 def get_stats(member_id: int):
-    local_conn = sqlite3.connect('healthcare.db')
+    local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute("""'
+        local_cursor.execute("""
         SELECT 
             AVG(weight), AVG(height), AVG(systolic), AVG(diastolic), AVG(blood_sugar), 
             AVG(steps), AVG(sleep_hours)  
         FROM health_records WHERE member_id = ?
-        """, (member_id))
-        local_conn.commit()
+        """, (member_id,))
+        stats = local_conn.commit()
+        
         return {"message": f"회원 {member_id}에 대한 건강 기록 평균"}
     finally:
         local_conn.close()
