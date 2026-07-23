@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -7,11 +7,13 @@ import sqlite3
 import datetime
 import math
 from pathlib import Path
+import re
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 FRONTEND_DIR = BASE_DIR / "frontend"
 
+DATA_DIR.mkdir(parents=True, exist_ok=True)  # 데이터 경로가 없으면 경로 생성
 DB_PATH = DATA_DIR / "healthcare.db"
 
 # DB 불러오기
@@ -26,7 +28,6 @@ records = []  # 파일 저장
 
 # 
 class UserIn(BaseModel):
-    is_admin: bool
     name: str
     phone_no: str
 
@@ -42,6 +43,13 @@ class RecordIn(BaseModel):
     sleep_hours: float = 0.0
     memo: str = ""
 
+class ResultIn(BaseModel):
+    member_id: int  # 회원 정보
+    record_id: int
+    bmi_value: int
+    bmi_category: str
+    blood_pressure: str
+    blood_sugar: str
 
 # BMI 계산
 def calculate_bmi(record: RecordIn):
@@ -75,6 +83,10 @@ def calculate_bmi(record: RecordIn):
         blood_sugar_warning = "정상"
     
     return bmi, bmi_category, blood_pressure_warning, blood_sugar_warning
+
+# 전화번호에서 숫자 이외의 문자 제거 (-)
+def normalize_phone_no(number: str):
+    return re.sub(r"\D", "", number)
 
 
 @app.get("/")
