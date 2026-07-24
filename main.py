@@ -88,6 +88,34 @@ def calculate_bmi(record: RecordIn):
 def normalize_phone_no(number: str):
     return re.sub(r"\D", "", number)
 
+# 관리자 확인
+def verify_admin(admin_user_id: int):
+    local_conn = sqlite3.connect(DB_PATH)
+    local_conn.row_factory = sqlite3.Row
+    local_cursor = local_conn.cursor()
+    
+    try:
+        local_cursor.execute(
+            """SELECT user_id, is_admin F
+            FROM users 
+            WHERE user_id = ?
+            """, 
+            (admin_user_id,),
+        )
+        
+        admin_user = local_cursor.fetchone()
+        
+        if admin_user is None:
+            raise HTTPException(status_code=401, detail="로그인 정보가 존재하지 않습니다.")
+        
+        is_admin = str(admin_user["is_admin"]).lower() in {"1", "true"}
+        
+        if not is_admin:
+            raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
+    
+    finally:
+        local_conn.close()
+
 
 @app.get("/")
 def read_root():
