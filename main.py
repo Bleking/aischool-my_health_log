@@ -255,6 +255,94 @@ def get_one_record(user_id):
     finally:
         local_conn.close()
 
+## 관리자 기능
+# 관리자 페이지
+@app.get("/admin/users")
+def get_admin_users(
+    admin_user_id: int,
+    name: str = "",
+):
+    verify_admin(admin_user_id)
+
+    keyword = name.strip()
+    name_pattern = f"{keyword}%"
+
+    local_conn = sqlite3.connect(DB_PATH)
+    local_conn.row_factory = sqlite3.Row
+    local_cursor = local_conn.cursor()
+
+    try:
+        local_cursor.execute(
+            """
+            SELECT
+                u.user_id, u.name, u.phone_no,
+
+                hr.record_id, hr.date,
+                hr.weight, hr.height,
+                hr.systolic, hr.diastolic, hr.blood_sugar,
+                hr.steps, hr.sleep_hours, hr.memo,
+
+                result.bmi_value, result.bmi_category, result.blood_pressure_category, result.blood_sugar_category
+
+            FROM users AS u
+
+            LEFT JOIN health_records AS hr
+                ON hr.record_id = (
+                    SELECT hr2.record_id
+                    FROM health_records AS hr2
+                    WHERE hr2.user_id = u.user_id
+                    ORDER BY
+                        hr2.date DESC,
+                        hr2.record_id DESC
+                    LIMIT 1
+                )
+
+            LEFT JOIN health_results AS result
+                ON result.record_id = hr.record_id
+
+            WHERE
+                u.is_admin = 0  # FALSE
+                AND (
+                    ? = ''
+                    OR u.name LIKE ?
+                )
+
+            ORDER BY
+                u.name ASC,
+                u.user_id ASC
+            """,
+            (
+                keyword,
+                name_pattern,
+            ),
+        )
+
+        rows = local_cursor.fetchall()
+
+        users = []
+
+        for row in rows:
+            user_data = {
+                "user_id": row["user_id"], "name": row["name"], "phone_no": row["phone_no"],
+                "record_id": row["record_id"], "date": row["date"],
+                "weight": row["weight"], "height": row["height"],
+                "systolic": row["systolic"], "diastolic": row["diastolic"], "blood_sugar": row["blood_sugar"],
+                "bmi": row["bmi_value"], "bmi_category": row["bmi_category"],
+                "blood_pressure_category": row["blood_pressure_category"],
+                "blood_sugar_category": row["blood_sugar_category"],
+                "steps": row["steps"], "sleep_hours": row["sleep_hours"], "memo": row["memo"],
+            }
+        
+            users.append(user_data)
+
+        return {
+            "total_count": len(users),
+            "keyword": keyword,
+            "users": users,
+        }
+
+    finally:
+        local_conn.close()
 
 # 기록 수정 (한 회원의 기록 한개 수정)
 @app.put("/records/{user_id}/{record_id}")
