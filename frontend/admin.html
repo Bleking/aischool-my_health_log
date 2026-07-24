@@ -76,13 +76,14 @@
             justify-content: space-between;
             align-items: center;
             gap: 16px;
+            width: 100%;
             margin-bottom: 22px;
         }
 
         .search-form {
             display: flex;
             width: 100%;
-            max-width: 560px;
+            /* max-width: 560px; */
             gap: 10px;
         }
 
@@ -124,12 +125,23 @@
             opacity: 0.65;
         }
 
+        .bottom-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        
         #logout-button {
-            white-space: nowrap;
-
+            min-width: 140px;
+            padding: 13px 24px;
+        
             background: rgba(255, 255, 255, 0.18);
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        #logout-button:hover {
+            background: rgba(255, 255, 255, 0.28);
         }
 
         .summary-area {
@@ -260,27 +272,20 @@
         <h1>관리자 페이지</h1>
 
         <p id="welcome-message" class="welcome-message"></p>
-
+        
         <section class="toolbar">
             <form id="search-form" class="search-form">
                 <input
                     id="search-name"
                     type="search"
-                    placeholder="고객 이름 검색: 이, 이준 등"
+                    placeholder=""
                     autocomplete="off"
                 >
-
-                <button
-                    id="search-button"
-                    type="submit"
-                >
+        
+                <button id="search-button" type="submit">
                     검색
                 </button>
             </form>
-
-            <button id="logout-button" type="button">
-                로그아웃
-            </button>
         </section>
 
         <section class="summary-area">
@@ -318,6 +323,12 @@
         </div>
 
         <p id="error-message"></p>
+
+        <div class="bottom-actions">
+            <button id="logout-button" type="button">
+                로그아웃
+            </button>
+        </div>
     </main>
 
     <script>
