@@ -381,11 +381,10 @@ def edit_records(user_id: int, record_id: int, record: RecordIn):
         
         local_cursor.execute(
             """UPDATE health_records SET
-                date = ?, weight = ?, height = ?, systolic = ?, diastolic = ?,
+                weight = ?, height = ?, systolic = ?, diastolic = ?,
                 blood_sugar = ?, steps = ?, sleep_hours = ?, memo = ?
             WHERE record_id = ? AND user_id = ?""",
             (
-                datetime.datetime.strptime(record.date, "%Y-%m-%d").date(),
                 record.weight, record.height,
                 record.systolic, record.diastolic, record.blood_sugar,
                 record.steps, record.sleep_hours, record.memo,
@@ -398,7 +397,7 @@ def edit_records(user_id: int, record_id: int, record: RecordIn):
         bmi, bmi_category, blood_pressure_warning, blood_sugar_warning = calculate_bmi(record)
 
         return {
-            "message": f"회원 {user_id}의 기록 {record_id} 수정 완료",
+            "message": f"회원 {user_id}의 건강 기록 {record_id} 수정 완료되었습니다.",
             "bmi": round(bmi, 2),
             "bmi_category": bmi_category,
             "blood_pressure_warning": blood_pressure_warning,
@@ -415,9 +414,49 @@ def delete_records(user_id: int, record_id: int):
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute("""DELETE FROM health_records WHERE record_id = ? AND user_id = ?""", (record_id, user_id))
+        local_cursor.execute(
+            """
+            SELECT record_id
+            FROM health_records
+            WHERE record_id = ?
+              AND user_id = ?
+            """,
+            (record_id, user_id),
+        )
+
+        existing_record = local_cursor.fetchone()
+
+        if existing_record is None:
+            raise HTTPException(
+                status_code=404,
+                detail="삭제할 건강 기록을 찾을 수 없습니다.",
+            )
+
+        # 결과를 먼저 삭제
+        local_cursor.execute(
+            """
+            DELETE FROM health_results
+            WHERE record_id = ?
+            """,
+            (record_id,),
+        )
+
+        # 건강 기록 삭제
+        local_cursor.execute(
+            """
+            DELETE FROM health_records
+            WHERE record_id = ?
+              AND user_id = ?
+            """,
+            (record_id, user_id),
+        )
+
         local_conn.commit()
-        return {"message": f"회원 {user_id}의 기록 {record_id} 삭제 완료"}
+
+        return {
+            "message": "회원 {user_id}의 기록 {record_id} 삭제 완료되었습니다."
+        }
+
     finally:
         local_conn.close()
 
