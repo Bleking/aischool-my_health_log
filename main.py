@@ -303,13 +303,12 @@ def get_admin_users(
         local_cursor.execute("""
             SELECT
                 u.user_id, u.name, u.phone_no,
-
                 hr.record_id, hr.date,
                 hr.weight, hr.height,
                 hr.systolic, hr.diastolic, hr.blood_sugar,
                 hr.steps, hr.sleep_hours, hr.memo,
 
-                result.bmi_value, result.bmi_category, result.blood_pressure_category, result.blood_sugar_category
+                result.bmi_value, result.bmi_category, result.blood_pressure, result.blood_sugar
 
             FROM users AS u
 
@@ -324,11 +323,11 @@ def get_admin_users(
                     LIMIT 1
                 )
 
-            LEFT JOIN health_results AS result
+            LEFT JOIN results AS result
                 ON result.record_id = hr.record_id
 
             WHERE
-                u.is_admin = 0  # FALSE
+                u.is_admin = 0  -- FALSE
                 AND (
                     ? = ''
                     OR u.name LIKE ?
@@ -355,8 +354,8 @@ def get_admin_users(
                 "weight": row["weight"], "height": row["height"],
                 "systolic": row["systolic"], "diastolic": row["diastolic"], "blood_sugar": row["blood_sugar"],
                 "bmi": row["bmi_value"], "bmi_category": row["bmi_category"],
-                "blood_pressure_category": row["blood_pressure_category"],
-                "blood_sugar_category": row["blood_sugar_category"],
+                "blood_pressure": row["blood_pressure"],
+                "blood_sugar": row["blood_sugar"],
                 "steps": row["steps"], "sleep_hours": row["sleep_hours"], "memo": row["memo"],
             }
         
