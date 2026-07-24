@@ -96,7 +96,7 @@ def verify_admin(admin_user_id: int):
     
     try:
         local_cursor.execute(
-            """SELECT user_id, is_admin F
+            """SELECT user_id, is_admin 
             FROM users 
             WHERE user_id = ?
             """, 
@@ -108,7 +108,7 @@ def verify_admin(admin_user_id: int):
         if admin_user is None:
             raise HTTPException(status_code=401, detail="로그인 정보가 존재하지 않습니다.")
         
-        is_admin = str(admin_user["is_admin"]).lower() in {"1", "true"}
+        is_admin = bool(admin_user["is_admin"])
         
         if not is_admin:
             raise HTTPException(status_code=403, detail="관리자 권한이 필요합니다.")
@@ -300,8 +300,7 @@ def get_admin_users(
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute(
-            """
+        local_cursor.execute("""
             SELECT
                 u.user_id, u.name, u.phone_no,
 
@@ -417,7 +416,7 @@ def delete_records(user_id: int, record_id: int):
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute( """DELETE FROM health_records WHERE record_id = ? AND user_id = ?""", (record_id, user_id))
+        local_cursor.execute("""DELETE FROM health_records WHERE record_id = ? AND user_id = ?""", (record_id, user_id))
         local_conn.commit()
         return {"message": f"회원 {user_id}의 기록 {record_id} 삭제 완료"}
     finally:
