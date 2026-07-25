@@ -327,7 +327,7 @@
                 <label for="memo">
                     메모 <span class="optional">(선택)</span>
                 </label>
-                <input id="memo" name="memo" type="string"
+                <input id="memo" name="memo" type="text"
                        maxlength="300" placeholder="특이사항을 입력하세요">
             </div>
 
@@ -389,9 +389,10 @@
     </main>
 
     <script>
-        const userId = sessionStorage.getItem("user_id");
+        const userId = Number(sessionStorage.getItem("user_id"));
         const userName = sessionStorage.getItem("user_name");
-
+        const isAdmin = sessionStorage.getItem("is_admin") === "true";
+        
         if (
             !Number.isInteger(userId) ||
             userId <= 0 ||
