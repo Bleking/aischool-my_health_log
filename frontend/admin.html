@@ -272,6 +272,87 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+
+            .edit-input {
+                width: 100%;
+                min-width: 82px;
+                padding: 8px 7px;
+            
+                border: 1px solid transparent;
+                border-radius: 7px;
+            
+                background: transparent;
+                color: #222;
+            
+                font-size: 14px;
+                text-align: center;
+            }
+            
+            .edit-input:disabled {
+                opacity: 1;
+                cursor: default;
+                -webkit-text-fill-color: #222;
+            }
+            
+            .memo-input {
+                min-width: 190px;
+                text-align: left;
+            }
+            
+            tr.editing {
+                background: #f0fff5;
+            }
+            
+            tr.editing .edit-input {
+                border: 1px solid #a7b0c0;
+                background: white;
+            }
+            
+            .action-cell {
+                min-width: 170px;
+            }
+            
+            .row-action-button {
+                padding: 8px 13px;
+                margin: 2px;
+            
+                border: none;
+                border-radius: 7px;
+            
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            
+            .edit-button {
+                background: #2563eb;
+            }
+            
+            .edit-button:hover {
+                background: #1d4ed8;
+            }
+            
+            .edit-button.complete-button {
+                background: #16a34a;
+            }
+            
+            .edit-button.complete-button:hover {
+                background: #15803d;
+            }
+            
+            .delete-button {
+                background: #dc2626;
+            }
+            
+            .delete-button:hover {
+                background: #b91c1c;
+            }
+            
+            .row-action-button:disabled {
+                opacity: 0.45;
+                cursor: not-allowed;
+            }
         }
     </style>
 </head>
@@ -323,6 +404,7 @@
                         <th>걸음 수</th>
                         <th>수면 시간</th>
                         <th>메모</th>
+                        <th>관리</th>
                     </tr>
                 </thead>
 
@@ -451,72 +533,116 @@
             if (!Array.isArray(users) || users.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="14" class="empty-cell">
+                        <td colspan="15" class="empty-cell">
                             검색된 고객이 없습니다.
                         </td>
                     </tr>
                 `;
                 return;
             }
-
+        
             tableBody.innerHTML = users
                 .map(user => {
-                    const escapedMemo =
-                        escapeHtml(user.memo);
-
+                    const hasRecord =
+                        user.record_id !== null &&
+                        user.record_id !== undefined;
+        
+                    const disabledAttribute =
+                        hasRecord ? "" : "disabled";
+        
                     return `
-                        <tr>
+                        <tr
+                            data-user-id="${user.user_id}"
+                            data-record-id="${user.record_id ?? ""}"
+                            data-record-date="${escapeHtml(user.date ?? "")}"
+                        >
                             <td class="name-cell">
                                 ${escapeHtml(user.name)}
                             </td>
-
+        
                             <td>
                                 ${escapeHtml(
                                     formatPhoneNumber(user.phone_no)
                                 )}
                             </td>
-
+        
                             <td>
-                                ${displayValue(user.weight, " kg")}
+                                <input
+                                    class="edit-input"
+                                    data-field="weight"
+                                    type="number"
+                                    min="20"
+                                    max="300"
+                                    step="0.1"
+                                    value="${escapeHtml(user.weight ?? "")}"
+                                    disabled
+                                >
                             </td>
-
+        
                             <td>
-                                ${displayValue(user.height, " cm")}
+                                <input
+                                    class="edit-input"
+                                    data-field="height"
+                                    type="number"
+                                    min="80"
+                                    max="250"
+                                    step="0.1"
+                                    value="${escapeHtml(user.height ?? "")}"
+                                    disabled
+                                >
                             </td>
-
+        
                             <td>
-                                ${displayValue(
-                                    user.systolic,
-                                    " mmHg"
-                                )}
+                                <input
+                                    class="edit-input"
+                                    data-field="systolic"
+                                    type="number"
+                                    min="50"
+                                    max="250"
+                                    step="1"
+                                    value="${escapeHtml(user.systolic ?? "")}"
+                                    disabled
+                                >
                             </td>
-
+        
                             <td>
-                                ${displayValue(
-                                    user.diastolic,
-                                    " mmHg"
-                                )}
+                                <input
+                                    class="edit-input"
+                                    data-field="diastolic"
+                                    type="number"
+                                    min="30"
+                                    max="150"
+                                    step="1"
+                                    value="${escapeHtml(user.diastolic ?? "")}"
+                                    disabled
+                                >
                             </td>
-
+        
                             <td>
-                                ${displayValue(
-                                    user.blood_sugar,
-                                    " mg/dL"
-                                )}
+                                <input
+                                    class="edit-input"
+                                    data-field="blood_sugar"
+                                    type="number"
+                                    min="40"
+                                    max="500"
+                                    step="1"
+                                    value="${escapeHtml(
+                                        user.blood_sugar ?? ""
+                                    )}"
+                                    disabled
+                                >
                             </td>
-
+        
                             <td>
                                 ${displayValue(user.bmi)}
                             </td>
-
+        
                             <td>
                                 <span class="status-badge">
-                                    ${displayValue(
-                                        user.bmi_category
-                                    )}
+                                    ${displayValue(user.bmi_category)}
                                 </span>
                             </td>
-
+        
                             <td>
                                 <span class="status-badge">
                                     ${displayValue(
@@ -524,7 +650,7 @@
                                     )}
                                 </span>
                             </td>
-
+        
                             <td>
                                 <span class="status-badge">
                                     ${displayValue(
@@ -532,29 +658,69 @@
                                     )}
                                 </span>
                             </td>
-
+        
                             <td>
-                                ${displayValue(
-                                    user.steps,
-                                    " 걸음"
-                                )}
+                                <input
+                                    class="edit-input"
+                                    data-field="steps"
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value="${escapeHtml(user.steps ?? 0)}"
+                                    disabled
+                                >
                             </td>
-
+        
                             <td>
-                                ${displayValue(
-                                    user.sleep_hours,
-                                    " 시간"
-                                )}
+                                <input
+                                    class="edit-input"
+                                    data-field="sleep_hours"
+                                    type="number"
+                                    min="0"
+                                    max="24"
+                                    step="0.1"
+                                    value="${escapeHtml(
+                                        user.sleep_hours ?? 0
+                                    )}"
+                                    disabled
+                                >
                             </td>
-
-                            <td class="memo-cell" title="${escapedMemo}">
-                                ${displayValue(escapedMemo)}
+        
+                            <td>
+                                <input
+                                    class="edit-input memo-input"
+                                    data-field="memo"
+                                    type="text"
+                                    value="${escapeHtml(user.memo ?? "")}"
+                                    disabled
+                                >
+                            </td>
+        
+                            <td class="action-cell">
+                                <button
+                                    type="button"
+                                    class="row-action-button edit-button"
+                                    data-action="edit"
+                                    ${disabledAttribute}
+                                >
+                                    수정
+                                </button>
+        
+                                <button
+                                    type="button"
+                                    class="row-action-button delete-button"
+                                    data-action="delete"
+                                    ${disabledAttribute}
+                                >
+                                    삭제
+                                </button>
                             </td>
                         </tr>
                     `;
                 })
                 .join("");
         }
+        //
 
         /* 5. 백엔드에서 고객 목록 조회 */
         async function loadUsers(keyword = "") {
@@ -657,6 +823,244 @@
             }
         );
 
+        /* 수정 데이터 수집 함수 */
+        function getInputValue(row, fieldName) {
+            const input = row.querySelector(
+                `[data-field="${fieldName}"]`
+            );
+        
+            if (!input) {
+                throw new Error(
+                    `${fieldName} 입력 항목을 찾지 못했습니다.`
+                );
+            }
+        
+            return input.value.trim();
+        }
+        
+        function getNumberValue(row, fieldName) {
+            const rawValue = getInputValue(row, fieldName);
+            const numberValue = Number(rawValue);
+        
+            if (
+                rawValue === "" ||
+                !Number.isFinite(numberValue)
+            ) {
+                throw new Error(
+                    `${fieldName} 값을 올바르게 입력해주세요.`
+                );
+            }
+        
+            return numberValue;
+        }
+
+        /* 테이블 수정·삭제 */
+        tableBody.addEventListener(
+            "click",
+            async event => {
+                const actionButton = event.target.closest(
+                    ".row-action-button"
+                );
+        
+                if (!actionButton) {
+                    return;
+                }
+        
+                const row = actionButton.closest("tr");
+        
+                if (!row) {
+                    return;
+                }
+        
+                const userId = Number(row.dataset.userId);
+                const recordId = Number(row.dataset.recordId);
+                const recordDate = row.dataset.recordDate;
+        
+                if (
+                    !Number.isInteger(userId) ||
+                    !Number.isInteger(recordId)
+                ) {
+                    alert("건강 기록 정보를 확인할 수 없습니다.");
+                    return;
+                }
+        
+                const action = actionButton.dataset.action;
+        
+                if (action === "edit") {
+                    await handleEditButton(
+                        row,
+                        actionButton,
+                        userId,
+                        recordId,
+                        recordDate
+                    );
+        
+                    return;
+                }
+        
+                if (action === "delete") {
+                    await handleDeleteButton(
+                        userId,
+                        recordId
+                    );
+                }
+            }
+        );
+
+        /* 수정 버튼 */
+        async function handleEditButton(
+            row,
+            editButton,
+            userId,
+            recordId,
+            recordDate
+        ) {
+            const isEditing =
+                row.classList.contains("editing");
+        
+            /*
+             * 첫 번째 클릭:
+             * 수정 모드 활성화
+             */
+            if (!isEditing) {
+                row.classList.add("editing");
+        
+                row
+                    .querySelectorAll(".edit-input")
+                    .forEach(input => {
+                        input.disabled = false;
+                    });
+        
+                editButton.textContent = "수정 완료";
+                editButton.classList.add("complete-button");
+        
+                const firstInput =
+                    row.querySelector(".edit-input");
+        
+                firstInput?.focus();
+        
+                return;
+            }
+        
+            /*
+             * 두 번째 클릭:
+             * 유효성 검사 후 수정 요청
+             */
+            const inputs = [
+                ...row.querySelectorAll(".edit-input")
+            ];
+        
+            for (const input of inputs) {
+                if (!input.reportValidity()) {
+                    input.focus();
+                    return;
+                }
+            }
+        
+            const confirmed = confirm(
+                "수정 사항을 적용하시겠습니까?"
+            );
+        
+            if (!confirmed) {
+                return;
+            }
+        
+            try {
+                editButton.disabled = true;
+                editButton.textContent = "처리 중...";
+        
+                const payload = {
+                    user_id: userId,
+                    date: recordDate,
+        
+                    weight: getNumberValue(row, "weight"),
+                    height: getNumberValue(row, "height"),
+        
+                    systolic:
+                        getNumberValue(row, "systolic"),
+        
+                    diastolic:
+                        getNumberValue(row, "diastolic"),
+        
+                    blood_sugar:
+                        getNumberValue(row, "blood_sugar"),
+        
+                    steps:
+                        getNumberValue(row, "steps"),
+        
+                    sleep_hours:
+                        getNumberValue(row, "sleep_hours"),
+        
+                    memo:
+                        getInputValue(row, "memo")
+                };
+        
+                const response = await fetch(
+                    `/records/${userId}/${recordId}`,
+                    {
+                        method: "PUT",
+        
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+        
+                        body: JSON.stringify(payload)
+                    }
+                );
+        
+                await parseApiResponse(response);
+        
+                alert("정상적으로 수정되었습니다.");
+        
+                await loadUsers(searchInput.value);
+        
+            } catch (error) {
+                console.error(
+                    "건강 기록 수정 오류:",
+                    error
+                );
+        
+                alert(
+                    error.message ||
+                    "건강 기록 수정에 실패했습니다."
+                );
+        
+                editButton.disabled = false;
+                editButton.textContent = "수정 완료";
+        
+            }
+        }
+
+        /* 삭제 버튼 */
+        async function handleDeleteButton(userId, recordId) {
+            const confirmed = confirm("해당 데이터를 삭제하시겠습니까?");
+        
+            if (!confirmed) {
+                return;
+            }
+        
+            try {
+                const response = await fetch(
+                    `/records/${userId}/${recordId}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+        
+                await parseApiResponse(response);
+        
+                alert("정상적으로 삭제되었습니다.");
+        
+                await loadUsers(searchInput.value);
+        
+            }
+            catch (error) {
+                console.error("건강 기록 삭제 오류:", error);
+        
+                alert(error.message || "건강 기록 삭제에 실패했습니다.");
+            }
+        }
+
         /* 8. 로그아웃 */
         document
             .getElementById("logout-button")
@@ -667,6 +1071,32 @@
 
         /* 9. 최초 진입 시 전체 고객 조회 */
         loadUsers();
+
+        /* 10. API 응답 처리 함수 */
+        async function parseApiResponse(response) {
+            const responseText = await response.text();
+        
+            let result = {};
+        
+            if (responseText) {
+                try {
+                    result = JSON.parse(responseText);
+                } catch {
+                    result = {
+                        detail: responseText
+                    };
+                }
+            }
+        
+            if (!response.ok) {
+                throw new Error(
+                    result.detail ||
+                    `요청에 실패했습니다. 상태 코드: ${response.status}`
+                );
+            }
+        
+            return result;
+        }
     </script>
 </body>
 </html>
