@@ -338,10 +338,11 @@ def get_user_records(user_id: int):
     local_cursor = local_conn.cursor()
 
     try:
-        # 회원 존재 여부 확인
         local_cursor.execute(
             """
-            SELECT user_id, name
+            SELECT
+                user_id,
+                name
             FROM users
             WHERE user_id = ?
             """,
@@ -356,7 +357,6 @@ def get_user_records(user_id: int):
                 detail="존재하지 않는 회원입니다.",
             )
 
-        # 건강 기록과 검사 결과 함께 조회
         local_cursor.execute(
             """
             SELECT
@@ -411,7 +411,6 @@ def get_user_records(user_id: int):
                 "systolic": row["systolic"],
                 "diastolic": row["diastolic"],
 
-                # 사용자가 입력한 혈당 수치
                 "blood_sugar":
                     row["measured_blood_sugar"],
 
@@ -419,7 +418,6 @@ def get_user_records(user_id: int):
                 "sleep_hours": row["sleep_hours"],
                 "memo": row["memo"],
 
-                # 분석 결과
                 "bmi": row["bmi_value"],
                 "bmi_category":
                     row["bmi_category"],
