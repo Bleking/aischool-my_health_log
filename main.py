@@ -332,15 +332,112 @@ async def get_all_records():
 
 # 회원 한 명에 대한 기록 조회. 없으면 404 반환
 @app.get("/records/{user_id}")
-def get_one_record(user_id):
+def get_user_records(user_id: int):
     local_conn = sqlite3.connect(DB_PATH)
+    local_conn.row_factory = sqlite3.Row
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute( """SELECT * FROM health_records WHERE user_id = ?""", (user_id,))
-        local_conn.commit()
+        # 회원 존재 여부 확인
+        local_cursor.execute(
+            """
+            SELECT user_id, name
+            FROM users
+            WHERE user_id = ?
+            """,
+            (user_id,),
+        )
 
-        return {"message": f"회원 {user_id}에 대한 건강 기록 불러오기 완료"}
+        user = local_cursor.fetchone()
+
+        if user is None:
+            raise HTTPException(
+                status_code=404,
+                detail="존재하지 않는 회원입니다.",
+            )
+
+        # 건강 기록과 검사 결과 함께 조회
+        local_cursor.execute(
+            """
+            SELECT
+                hr.record_id,
+                hr.date,
+                hr.weight,
+                hr.height,
+                hr.systolic,
+                hr.diastolic,
+
+                hr.blood_sugar
+                    AS measured_blood_sugar,
+
+                hr.steps,
+                hr.sleep_hours,
+                hr.memo,
+
+                result.bmi_value,
+                result.bmi_category,
+
+                result.blood_pressure
+                    AS blood_pressure_category,
+
+                result.blood_sugar
+                    AS blood_sugar_category
+
+            FROM health_records AS hr
+
+            LEFT JOIN results AS result
+                ON result.record_id = hr.record_id
+
+            WHERE hr.user_id = ?
+
+            ORDER BY
+                hr.date DESC,
+                hr.record_id DESC
+            """,
+            (user_id,),
+        )
+
+        rows = local_cursor.fetchall()
+
+        records = []
+
+        for row in rows:
+            records.append({
+                "record_id": row["record_id"],
+                "date": row["date"],
+
+                "weight": row["weight"],
+                "height": row["height"],
+                "systolic": row["systolic"],
+                "diastolic": row["diastolic"],
+
+                # 사용자가 입력한 혈당 수치
+                "blood_sugar":
+                    row["measured_blood_sugar"],
+
+                "steps": row["steps"],
+                "sleep_hours": row["sleep_hours"],
+                "memo": row["memo"],
+
+                # 분석 결과
+                "bmi": row["bmi_value"],
+                "bmi_category":
+                    row["bmi_category"],
+
+                "blood_pressure_category":
+                    row["blood_pressure_category"],
+
+                "blood_sugar_category":
+                    row["blood_sugar_category"],
+            })
+
+        return {
+            "user_id": user["user_id"],
+            "name": user["name"],
+            "total_count": len(records),
+            "records": records,
+        }
+
     finally:
         local_conn.close()
 
