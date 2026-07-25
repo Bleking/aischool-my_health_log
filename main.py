@@ -349,7 +349,7 @@ def get_one_record(user_id):
 @app.get("/admin/users")
 def get_admin_users(admin_user_id: int, name: str = ""):
     verify_admin(admin_user_id)
-
+    
     keyword = name.strip()
     name_pattern = f"{keyword}%"
 
@@ -365,7 +365,7 @@ def get_admin_users(admin_user_id: int, name: str = ""):
                 hr.weight, hr.height,
                 hr.systolic, hr.diastolic, hr.blood_sugar,
                 hr.steps, hr.sleep_hours, hr.memo,
-
+                
                 result.bmi_value, result.bmi_category, 
                 result.blood_pressure AS blood_pressure_category, 
                 result.blood_sugar AS blood_sugar_category
@@ -385,7 +385,7 @@ def get_admin_users(admin_user_id: int, name: str = ""):
 
             LEFT JOIN results AS result
                 ON result.record_id = hr.record_id
-
+            
             WHERE
                 u.is_admin = 0  -- FALSE
                 AND (
