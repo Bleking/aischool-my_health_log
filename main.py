@@ -340,9 +340,7 @@ def get_user_records(user_id: int):
     try:
         local_cursor.execute(
             """
-            SELECT
-                user_id,
-                name
+            SELECT user_id, name
             FROM users
             WHERE user_id = ?
             """,
@@ -453,44 +451,55 @@ def get_admin_users(admin_user_id: int, name: str = ""):
     local_cursor = local_conn.cursor()
 
     try:
-        local_cursor.execute("""
+        local_cursor.execute(
+            """
             SELECT
-                u.user_id, u.name, u.phone_no,
-                hr.record_id, hr.date,
-                hr.weight, hr.height,
-                hr.systolic, hr.diastolic, hr.blood_sugar,
-                hr.steps, hr.sleep_hours, hr.memo,
-                
-                result.bmi_value, result.bmi_category, 
-                result.blood_pressure AS blood_pressure_category, 
-                result.blood_sugar AS blood_sugar_category
-
+                u.user_id,
+                u.name,
+                u.phone_no,
+        
+                hr.record_id,
+                hr.date,
+                hr.weight,
+                hr.height,
+                hr.systolic,
+                hr.diastolic,
+        
+                hr.blood_sugar
+                    AS measured_blood_sugar,
+        
+                hr.steps,
+                hr.sleep_hours,
+                hr.memo,
+        
+                result.bmi_value,
+                result.bmi_category,
+        
+                result.blood_pressure
+                    AS blood_pressure_category,
+        
+                result.blood_sugar
+                    AS blood_sugar_category
+        
             FROM health_records AS hr
-
-            INNER JOIN users AS u 
-                ON hr.record_id = (
-                    SELECT hr2.record_id
-                    FROM health_records AS hr2
-                    WHERE hr2.user_id = u.user_id
-                    ORDER BY
-                        hr2.date DESC,
-                        hr2.record_id DESC
-                    LIMIT 1
-                )
-
+        
+            INNER JOIN users AS u
+                ON u.user_id = hr.user_id
+        
             LEFT JOIN results AS result
                 ON result.record_id = hr.record_id
-            
+        
             WHERE
-                u.is_admin = 0  -- FALSE
+                u.is_admin = 0
                 AND (
                     ? = ''
                     OR u.name LIKE ?
                 )
-
+        
             ORDER BY
                 u.name ASC,
-                u.user_id ASC
+                hr.date DESC,
+                hr.record_id DESC
             """,
             (
                 keyword,
@@ -504,14 +513,34 @@ def get_admin_users(admin_user_id: int, name: str = ""):
 
         for row in rows:
             user_data = {
-                "user_id": row["user_id"], "name": row["name"], "phone_no": row["phone_no"],
-                "record_id": row["record_id"], "date": row["date"],
-                "weight": row["weight"], "height": row["height"],
-                "systolic": row["systolic"], "diastolic": row["diastolic"], "blood_sugar": row["blood_sugar"],
-                "bmi": row["bmi_value"], "bmi_category": row["bmi_category"],
-                "blood_pressure_category": row["blood_pressure_category"],
-                "blood_sugar_category": row["blood_sugar_category"],
-                "steps": row["steps"], "sleep_hours": row["sleep_hours"], "memo": row["memo"],
+                "user_id": row["user_id"],
+                "name": row["name"],
+                "phone_no": row["phone_no"],
+        
+                "record_id": row["record_id"],
+                "date": row["date"],
+        
+                "weight": row["weight"],
+                "height": row["height"],
+                "systolic": row["systolic"],
+                "diastolic": row["diastolic"],
+        
+                "blood_sugar":
+                    row["measured_blood_sugar"],
+        
+                "bmi": row["bmi_value"],
+                "bmi_category":
+                    row["bmi_category"],
+        
+                "blood_pressure_category":
+                    row["blood_pressure_category"],
+        
+                "blood_sugar_category":
+                    row["blood_sugar_category"],
+        
+                "steps": row["steps"],
+                "sleep_hours": row["sleep_hours"],
+                "memo": row["memo"],
             }
         
             users.append(user_data)
