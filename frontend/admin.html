@@ -6,7 +6,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-    <title>건강 기록 관리자 페이</title>
+    <title>건강 기록 관리자 페이지</title>
 
     <style>
         * {
@@ -543,17 +543,15 @@
         
             tableBody.innerHTML = users
                 .map(user => {
-                    const hasRecord =
-                        user.record_id !== null &&
-                        user.record_id !== undefined;
-        
-                    const disabledAttribute =
-                        hasRecord ? "" : "disabled";
+                    const recordId = Number(user.record_id)
+                    const hasRecord = 
+                        Number.isInteger(recordId) && 
+                        recordId > 0;
         
                     return `
                         <tr
                             data-user-id="${user.user_id}"
-                            data-record-id="${user.record_id ?? ""}"
+                            data-record-id="${hasRecord ? recordId :  ""}"
                             data-record-date="${escapeHtml(user.date ?? "")}"
                         >
                             <td class="name-cell">
@@ -701,7 +699,6 @@
                                     type="button"
                                     class="row-action-button edit-button"
                                     data-action="edit"
-                                    ${disabledAttribute}
                                 >
                                     수정
                                 </button>
@@ -710,7 +707,6 @@
                                     type="button"
                                     class="row-action-button delete-button"
                                     data-action="delete"
-                                    ${disabledAttribute}
                                 >
                                     삭제
                                 </button>
@@ -873,14 +869,18 @@
                 }
         
                 const userId = Number(row.dataset.userId);
-                const recordId = Number(row.dataset.recordId);
+
+                const rawRecordId = row.dataset.recordId;
+                const recordId = rawRecordId ? Number(rawRecordId) : null;
                 const recordDate = row.dataset.recordDate;
         
-                if (
-                    !Number.isInteger(userId) ||
-                    !Number.isInteger(recordId)
-                ) {
-                    alert("건강 기록 정보를 확인할 수 없습니다.");
+                if (!Number.isInteger(userId) || userId <= 0) {
+                    alert("회원 정보를 확인할 수 없습니다.");
+                    return;
+                }
+
+                if (recordId == null || !Number.isInteger(recordId) || recordId <= 0) {
+                    alert("해당 회원에게 저장된 건강 기록이 없습니다.")
                     return;
                 }
         
