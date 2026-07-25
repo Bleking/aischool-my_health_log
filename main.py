@@ -260,8 +260,8 @@ def save_records(user_id: int, record: RecordIn):
         (
             bmi,
             bmi_category,
-            blood_pressure_category,
-            blood_sugar_category,
+            blood_pressure,
+            blood_sugar,
         ) = calculate_bmi(record)
 
         # 3. 검사 결과 저장
@@ -272,8 +272,8 @@ def save_records(user_id: int, record: RecordIn):
                 record_id,
                 bmi_value,
                 bmi_category,
-                blood_pressure_category,
-                blood_sugar_category
+                blood_pressure,
+                blood_sugar
             )
             VALUES (?, ?, ?, ?, ?, ?)
             """,
@@ -282,8 +282,8 @@ def save_records(user_id: int, record: RecordIn):
                 record_id,
                 round(bmi, 2),
                 bmi_category,
-                blood_pressure_category,
-                blood_sugar_category,
+                blood_pressure,
+                blood_sugar,
             ),
         )
 
@@ -295,9 +295,9 @@ def save_records(user_id: int, record: RecordIn):
             "bmi": round(bmi, 2),
             "bmi_category": bmi_category,
             "blood_pressure_warning":
-                blood_pressure_category,
+                blood_pressure,
             "blood_sugar_warning":
-                blood_sugar_category,
+                blood_sugar,
         }
 
     except Exception:
@@ -484,8 +484,8 @@ def edit_records(
         (
             bmi,
             bmi_category,
-            blood_pressure_category,
-            blood_sugar_category,
+            blood_pressure,
+            blood_sugar,
         ) = calculate_bmi(record)
 
         local_cursor.execute(
@@ -494,16 +494,16 @@ def edit_records(
             SET
                 bmi_value = ?,
                 bmi_category = ?,
-                blood_pressure_category = ?,
-                blood_sugar_category = ?
+                blood_pressure = ?,
+                blood_sugar = ?
             WHERE record_id = ?
               AND user_id = ?
             """,
             (
                 round(bmi, 2),
                 bmi_category,
-                blood_pressure_category,
-                blood_sugar_category,
+                blood_pressure,
+                blood_sugar,
                 record_id,
                 user_id,
             ),
@@ -518,8 +518,8 @@ def edit_records(
                     record_id,
                     bmi_value,
                     bmi_category,
-                    blood_pressure_category,
-                    blood_sugar_category
+                    blood_pressure,
+                    blood_sugar
                 )
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
@@ -528,8 +528,8 @@ def edit_records(
                     record_id,
                     round(bmi, 2),
                     bmi_category,
-                    blood_pressure_category,
-                    blood_sugar_category,
+                    blood_pressure,
+                    blood_sugar,
                 ),
             )
 
@@ -541,9 +541,9 @@ def edit_records(
             "bmi": round(bmi, 2),
             "bmi_category": bmi_category,
             "blood_pressure_warning":
-                blood_pressure_category,
+                blood_pressure,
             "blood_sugar_warning":
-                blood_sugar_category,
+                blood_sugar,
         }
 
     except Exception:
