@@ -286,10 +286,7 @@ def get_one_record(user_id):
 ## 관리자 기능
 # 관리자 페이지
 @app.get("/admin/users")
-def get_admin_users(
-    admin_user_id: int,
-    name: str = "",
-):
+def get_admin_users(admin_user_id: int, name: str = ""):
     verify_admin(admin_user_id)
 
     keyword = name.strip()
@@ -310,9 +307,9 @@ def get_admin_users(
 
                 result.bmi_value, result.bmi_category, result.blood_pressure, result.blood_sugar
 
-            FROM users AS u
+            FROM health_records AS hr
 
-            LEFT JOIN health_records AS hr
+            INNER JOIN users AS u
                 ON hr.record_id = (
                     SELECT hr2.record_id
                     FROM health_records AS hr2
@@ -435,7 +432,7 @@ def delete_records(user_id: int, record_id: int):
         # 결과를 먼저 삭제
         local_cursor.execute(
             """
-            DELETE FROM health_results
+            DELETE FROM results
             WHERE record_id = ?
             """,
             (record_id,),
@@ -445,8 +442,7 @@ def delete_records(user_id: int, record_id: int):
         local_cursor.execute(
             """
             DELETE FROM health_records
-            WHERE record_id = ?
-              AND user_id = ?
+            WHERE record_id = ? AND user_id = ?
             """,
             (record_id, user_id),
         )
@@ -456,6 +452,10 @@ def delete_records(user_id: int, record_id: int):
         return {
             "message": "회원 {user_id}의 기록 {record_id} 삭제 완료되었습니다."
         }
+    
+    except Exception:
+        local_conn.rollback()
+        raise
 
     finally:
         local_conn.close()
