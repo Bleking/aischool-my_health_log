@@ -366,11 +366,13 @@ def get_admin_users(admin_user_id: int, name: str = ""):
                 hr.systolic, hr.diastolic, hr.blood_sugar,
                 hr.steps, hr.sleep_hours, hr.memo,
 
-                result.bmi_value, result.bmi_category, result.blood_pressure, result.blood_sugar
+                result.bmi_value, result.bmi_category, 
+                result.blood_pressure AS blood_pressure_category, 
+                result.blood_sugar AS blood_sugar_category
 
             FROM health_records AS hr
 
-            INNER JOIN users AS u
+            INNER JOIN users AS u 
                 ON hr.record_id = (
                     SELECT hr2.record_id
                     FROM health_records AS hr2
@@ -412,8 +414,8 @@ def get_admin_users(admin_user_id: int, name: str = ""):
                 "weight": row["weight"], "height": row["height"],
                 "systolic": row["systolic"], "diastolic": row["diastolic"], "blood_sugar": row["blood_sugar"],
                 "bmi": row["bmi_value"], "bmi_category": row["bmi_category"],
-                "blood_pressure": row["blood_pressure"],
-                "blood_sugar": row["blood_sugar"],
+                "blood_pressure_category": row["blood_pressure_category"],
+                "blood_sugar_category": row["blood_sugar_category"],
                 "steps": row["steps"], "sleep_hours": row["sleep_hours"], "memo": row["memo"],
             }
         
