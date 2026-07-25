@@ -215,34 +215,95 @@ def save_records(user_id: int, record: RecordIn):
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
 
-    date_obj = datetime.datetime.strptime(record.date, "%Y-%m-%d").date()
+    date_obj = datetime.datetime.strptime(
+        record.date,
+        "%Y-%m-%d"
+    ).date()
 
     try:
-        # 건강 기록 입력하는 회원 정보
+        record.user_id = user_id
+
+        # 1. 건강 수치 저장
         local_cursor.execute(
-            """INSERT INTO health_records (
-                date, user_id, weight, height, systolic, diastolic, blood_sugar, steps, sleep_hours, memo
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            """
+            INSERT INTO health_records (
+                date,
+                user_id,
+                weight,
+                height,
+                systolic,
+                diastolic,
+                blood_sugar,
+                steps,
+                sleep_hours,
+                memo
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
             (
                 date_obj,
-                record.user_id,
-                record.weight, record.height,
-                record.systolic, record.diastolic, record.blood_sugar,
-                record.steps, record.sleep_hours, record.memo,
+                user_id,
+                record.weight,
+                record.height,
+                record.systolic,
+                record.diastolic,
+                record.blood_sugar,
+                record.steps,
+                record.sleep_hours,
+                record.memo,
             ),
         )
+
+        record_id = local_cursor.lastrowid
+
+        # 2. 검사 결과 계산
+        (
+            bmi,
+            bmi_category,
+            blood_pressure_category,
+            blood_sugar_category,
+        ) = calculate_bmi(record)
+
+        # 3. 검사 결과 저장
+        local_cursor.execute(
+            """
+            INSERT INTO results (
+                user_id,
+                record_id,
+                bmi_value,
+                bmi_category,
+                blood_pressure_category,
+                blood_sugar_category
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                record_id,
+                round(bmi, 2),
+                bmi_category,
+                blood_pressure_category,
+                blood_sugar_category,
+            ),
+        )
+
         local_conn.commit()
 
-        # BMI 계산
-        bmi, bmi_category, blood_pressure_warning, blood_sugar_warning = calculate_bmi(record)
-
         return {
-            "message": f"회원 {record.user_id} 건강 수치 저장 완료",
+            "message": f"회원 {user_id} 건강 수치 저장 완료",
+            "record_id": record_id,
             "bmi": round(bmi, 2),
             "bmi_category": bmi_category,
-            "blood_pressure_warning": blood_pressure_warning,
-            "blood_sugar_warning": blood_sugar_warning,
+            "blood_pressure_warning":
+                blood_pressure_category,
+            "blood_sugar_warning":
+                blood_sugar_category,
         }
+
+    except Exception:
+        local_conn.rollback()
+        raise
+
     finally:
         local_conn.close()
 
@@ -369,37 +430,126 @@ def get_admin_users(admin_user_id: int, name: str = ""):
 
 # 기록 수정 (한 회원의 기록 한개 수정)
 @app.put("/records/{user_id}/{record_id}")
-def edit_records(user_id: int, record_id: int, record: RecordIn):
+def edit_records(
+    user_id: int,
+    record_id: int,
+    record: RecordIn,
+):
     local_conn = sqlite3.connect(DB_PATH)
     local_cursor = local_conn.cursor()
-    
+
     try:
         record.user_id = user_id
-        
+
         local_cursor.execute(
-            """UPDATE health_records SET
-                weight = ?, height = ?, systolic = ?, diastolic = ?,
-                blood_sugar = ?, steps = ?, sleep_hours = ?, memo = ?
-            WHERE record_id = ? AND user_id = ?""",
+            """
+            UPDATE health_records
+            SET
+                date = ?,
+                weight = ?,
+                height = ?,
+                systolic = ?,
+                diastolic = ?,
+                blood_sugar = ?,
+                steps = ?,
+                sleep_hours = ?,
+                memo = ?
+            WHERE record_id = ?
+              AND user_id = ?
+            """,
             (
-                record.weight, record.height,
-                record.systolic, record.diastolic, record.blood_sugar,
-                record.steps, record.sleep_hours, record.memo,
-                record_id, user_id
+                datetime.datetime.strptime(
+                    record.date,
+                    "%Y-%m-%d"
+                ).date(),
+                record.weight,
+                record.height,
+                record.systolic,
+                record.diastolic,
+                record.blood_sugar,
+                record.steps,
+                record.sleep_hours,
+                record.memo,
+                record_id,
+                user_id,
             ),
         )
+
+        if local_cursor.rowcount == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="수정할 건강 기록이 없습니다.",
+            )
+
+        (
+            bmi,
+            bmi_category,
+            blood_pressure_category,
+            blood_sugar_category,
+        ) = calculate_bmi(record)
+
+        local_cursor.execute(
+            """
+            UPDATE results
+            SET
+                bmi_value = ?,
+                bmi_category = ?,
+                blood_pressure_category = ?,
+                blood_sugar_category = ?
+            WHERE record_id = ?
+              AND user_id = ?
+            """,
+            (
+                round(bmi, 2),
+                bmi_category,
+                blood_pressure_category,
+                blood_sugar_category,
+                record_id,
+                user_id,
+            ),
+        )
+
+        # 기존 결과 행이 없을 수도 있으므로 새로 생성
+        if local_cursor.rowcount == 0:
+            local_cursor.execute(
+                """
+                INSERT INTO results (
+                    user_id,
+                    record_id,
+                    bmi_value,
+                    bmi_category,
+                    blood_pressure_category,
+                    blood_sugar_category
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    record_id,
+                    round(bmi, 2),
+                    bmi_category,
+                    blood_pressure_category,
+                    blood_sugar_category,
+                ),
+            )
+
         local_conn.commit()
 
-        # Recalculate BMI and warnings for the updated record
-        bmi, bmi_category, blood_pressure_warning, blood_sugar_warning = calculate_bmi(record)
-
         return {
-            "message": f"회원 {user_id}의 건강 기록 {record_id} 수정 완료되었습니다.",
+            "message":
+                f"회원 {user_id}의 기록 {record_id} 수정 완료",
             "bmi": round(bmi, 2),
             "bmi_category": bmi_category,
-            "blood_pressure_warning": blood_pressure_warning,
-            "blood_sugar_warning": blood_sugar_warning,
+            "blood_pressure_warning":
+                blood_pressure_category,
+            "blood_sugar_warning":
+                blood_sugar_category,
         }
+
+    except Exception:
+        local_conn.rollback()
+        raise
+
     finally:
         local_conn.close()
 
