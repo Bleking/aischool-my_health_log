@@ -19,7 +19,7 @@
 
         .survey-container {
             width: 100%;
-            max-width: 700px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 32px;
             border-radius: 16px;
@@ -95,6 +95,170 @@
             margin-top: 16px;
             text-align: center;
         }
+        
+        #survey-form {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .history-section {
+            margin-top: 42px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.35);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        
+        .history-header h2 {
+            margin: 0 0 6px;
+        }
+        
+        #history-summary {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .secondary-button {
+            width: auto;
+            min-width: 120px;
+            margin: 0;
+            padding: 11px 16px;
+        
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        
+        .secondary-button:hover {
+            background: rgba(255, 255, 255, 0.28);
+        }
+        
+        .comparison-area {
+            display: grid;
+            grid-template-columns:
+                repeat(4, minmax(0, 1fr));
+        
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        
+        .comparison-card {
+            padding: 16px;
+            border-radius: 10px;
+            background: white;
+            color: #222;
+        }
+        
+        .comparison-label {
+            margin-bottom: 7px;
+            color: #666;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .comparison-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .history-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            background: white;
+        }
+        
+        .history-table {
+            width: 100%;
+            min-width: 1350px;
+            border-collapse: collapse;
+            color: #222;
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 12px 11px;
+            border-bottom: 1px solid #e7e7e7;
+        
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        
+        .history-table th {
+            background: #5b4bb7;
+            color: white;
+        }
+        
+        .history-table tbody tr:hover {
+            background: #f5f3ff;
+        }
+        
+        .history-table .memo-cell {
+            max-width: 220px;
+            overflow: hidden;
+            text-align: left;
+            text-overflow: ellipsis;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            min-width: 68px;
+            padding: 6px 10px;
+        
+            border-radius: 999px;
+            background: #ede9ff;
+            color: #5b4bb7;
+        
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .empty-history-cell {
+            padding: 34px;
+            text-align: center;
+            color: #666;
+        }
+        
+        #history-error-message {
+            min-height: 24px;
+            margin-top: 14px;
+            color: #ffe2e2;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 900px) {
+            .comparison-area {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .survey-container {
+                width: 100%;
+                padding: 20px;
+            }
+        
+            .history-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        
+            .secondary-button {
+                width: 100%;
+            }
+        
+            .comparison-area {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -169,7 +333,57 @@
 
             <button id="submit-button" type="submit">제출하기</button>
         </form>
-
+        
+        <section class="history-section">
+            <div class="history-header">
+                <div>
+                    <h2>나의 건강 기록</h2>
+        
+                    <p id="history-summary">
+                        이전 건강 기록을 불러오는 중입니다.
+                    </p>
+                </div>
+        
+                <button
+                    id="refresh-history-button"
+                    class="secondary-button"
+                    type="button"
+                >
+                    새로고침
+                </button>
+            </div>
+        
+            <div
+                id="comparison-area"
+                class="comparison-area"
+            ></div>
+        
+            <div class="history-table-wrapper">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>검사일</th>
+                            <th>몸무게</th>
+                            <th>BMI</th>
+                            <th>BMI 분류</th>
+                            <th>혈압</th>
+                            <th>혈압 분류</th>
+                            <th>공복 혈당</th>
+                            <th>당뇨 분류</th>
+                            <th>걸음 수</th>
+                            <th>수면 시간</th>
+                            <th>메모</th>
+                        </tr>
+                    </thead>
+        
+                    <tbody id="history-table-body">
+                    </tbody>
+                </table>
+            </div>
+        
+            <p id="history-error-message"></p>
+        </section>
+        
         <p id="message"></p>
         <button id="logout-button" type="button">로그아웃</button>
     </main>
@@ -178,12 +392,23 @@
         const userId = sessionStorage.getItem("user_id");
         const userName = sessionStorage.getItem("user_name");
 
-        if (!userId || !userName) {
+        if (
+            !Number.isInteger(userId) ||
+            userId <= 0 ||
+            !userName
+        ) {
             alert("로그인이 필요합니다.");
+            sessionStorage.clear();
             window.location.href = "/";
-        } else {
-            document.getElementById("welcome-message").textContent =
-                `${userName}님, 건강 수치를 입력해주세요.`;
+        }
+        else if (isAdmin) {
+            window.location.href = "/admin";
+        }
+        else {
+            document
+                .getElementById("welcome-message")
+                .textContent =
+                    `${userName}님, 환영합니다.`;
         }
 
         function getLocalDateString() {
@@ -285,6 +510,73 @@
                 sessionStorage.clear();
                 window.location.href = "/";
             });
+
+        const historyTableBody =
+            document.getElementById(
+                "history-table-body"
+            );
+        
+        const historySummary =
+            document.getElementById(
+                "history-summary"
+            );
+        
+        const historyErrorMessage =
+            document.getElementById(
+                "history-error-message"
+            );
+        
+        const comparisonArea =
+            document.getElementById(
+                "comparison-area"
+            );
+        
+        function escapeHtml(value) {
+            if (
+                value === null ||
+                value === undefined
+            ) {
+                return "";
+            }
+        
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+        
+        function displayHistoryValue(
+            value,
+            unit = ""
+        ) {
+            if (
+                value === null ||
+                value === undefined ||
+                value === ""
+            ) {
+                return "-";
+            }
+        
+            return `${value}${unit}`;
+        }
+        
+        function formatHistoryDate(dateValue) {
+            if (!dateValue) {
+                return "-";
+            }
+        
+            const date = new Date(
+                `${dateValue}T00:00:00`
+            );
+        
+            if (Number.isNaN(date.getTime())) {
+                return dateValue;
+            }
+        
+            return date.toLocaleDateString("ko-KR");
+        }
     </script>
 </body>
 </html>
