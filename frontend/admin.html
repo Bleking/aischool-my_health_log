@@ -308,13 +308,24 @@
                 background: white;
             }
             
+            .manage-column,
             .action-cell {
-                min-width: 170px;
+                width: 220px;
+                min-width: 220px;
+            }
+            
+            .action-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                width: 100%;
             }
             
             .row-action-button {
-                padding: 8px 13px;
-                margin: 2px;
+                width: 100%;
+                min-width: 0;
+                padding: 9px 12px;
+                margin: 0;
             
                 border: none;
                 border-radius: 7px;
@@ -322,6 +333,7 @@
                 color: white;
                 font-size: 14px;
                 font-weight: bold;
+                white-space: nowrap;
                 cursor: pointer;
             }
             
@@ -404,7 +416,7 @@
                         <th>걸음 수</th>
                         <th>수면 시간</th>
                         <th>메모</th>
-                        <th>관리</th>
+                        <th class="manage-column">관리</th>
                     </tr>
                 </thead>
 
