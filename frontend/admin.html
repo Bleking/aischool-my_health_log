@@ -17,9 +17,6 @@
             min-height: 100vh;
             margin: 0;
             padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
 
             font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -27,8 +24,8 @@
         }
 
         .admin-container {
-            width: 100%;
-            max-width: 700px;
+            width: 95vw;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 32px;
             border-radius: 16px;
@@ -181,7 +178,8 @@
 
         table {
             width: 100%;
-            min-width: 1900px;
+            min-width: 2150px;
+            table-layout: auto;
             border-collapse: collapse;
             color: #222;
         }
@@ -246,6 +244,104 @@
             font-weight: bold;
         }
 
+        .edit-input {
+            width: 100%;
+            min-width: 82px;
+            padding: 8px 7px;
+        
+            border: 1px solid transparent;
+            border-radius: 7px;
+        
+            background: transparent;
+            color: #222;
+        
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .edit-input:disabled {
+            opacity: 1;
+            cursor: default;
+            -webkit-text-fill-color: #222;
+        }
+        
+        .memo-input {
+            min-width: 190px;
+            text-align: left;
+        }
+        
+        tr.editing {
+            background: #f0fff5;
+        }
+        
+        tr.editing .edit-input {
+            border: 1px solid #a7b0c0;
+            background: white;
+        }
+        
+        .manage-column,
+        .action-cell {
+            width: 220px;
+            min-width: 220px;
+        }
+        
+        .action-buttons {
+            display: grid;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .action-cell .row-action-button {
+            width: 100%;
+            min-width: 0;
+            padding: 9px 12px;
+            margin: 0;
+
+            flex: 0 0 auto;
+        
+            border: none;
+            border-radius: 7px;
+        
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        
+        .action-cell .edit-button {
+            min-width: 96px;
+            background: #2563eb;
+        }
+        
+        .action-cell .edit-button:hover {
+            background: #1d4ed8;
+        }
+        
+        .action-cell .edit-button.complete-button {
+            background: #16a34a;
+        }
+        
+        .action-cell .edit-button.complete-button:hover {
+            background: #15803d;
+        }
+        
+        .action-cell .delete-button {
+            background: #dc2626;
+        }
+        
+        .action-cell .delete-button:hover {
+            background: #b91c1c;
+        }
+        
+        .action-cell .row-action-button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 760px) {
             body {
                 padding: 20px 12px;
@@ -271,99 +367,6 @@
             .summary-area {
                 flex-direction: column;
                 align-items: flex-start;
-            }
-
-            .edit-input {
-                width: 100%;
-                min-width: 82px;
-                padding: 8px 7px;
-            
-                border: 1px solid transparent;
-                border-radius: 7px;
-            
-                background: transparent;
-                color: #222;
-            
-                font-size: 14px;
-                text-align: center;
-            }
-            
-            .edit-input:disabled {
-                opacity: 1;
-                cursor: default;
-                -webkit-text-fill-color: #222;
-            }
-            
-            .memo-input {
-                min-width: 190px;
-                text-align: left;
-            }
-            
-            tr.editing {
-                background: #f0fff5;
-            }
-            
-            tr.editing .edit-input {
-                border: 1px solid #a7b0c0;
-                background: white;
-            }
-            
-            .manage-column,
-            .action-cell {
-                width: 220px;
-                min-width: 220px;
-            }
-            
-            .action-buttons {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-                width: 100%;
-            }
-            
-            .row-action-button {
-                width: 100%;
-                min-width: 0;
-                padding: 9px 12px;
-                margin: 0;
-            
-                border: none;
-                border-radius: 7px;
-            
-                color: white;
-                font-size: 14px;
-                font-weight: bold;
-                white-space: nowrap;
-                cursor: pointer;
-            }
-            
-            .edit-button {
-                background: #2563eb;
-            }
-            
-            .edit-button:hover {
-                background: #1d4ed8;
-            }
-            
-            .edit-button.complete-button {
-                background: #16a34a;
-            }
-            
-            .edit-button.complete-button:hover {
-                background: #15803d;
-            }
-            
-            .delete-button {
-                background: #dc2626;
-            }
-            
-            .delete-button:hover {
-                background: #b91c1c;
-            }
-            
-            .row-action-button:disabled {
-                opacity: 0.45;
-                cursor: not-allowed;
             }
         }
     </style>
@@ -707,21 +710,23 @@
                             </td>
         
                             <td class="action-cell">
-                                <button
-                                    type="button"
-                                    class="row-action-button edit-button"
-                                    data-action="edit"
-                                >
-                                    수정
-                                </button>
-        
-                                <button
-                                    type="button"
-                                    class="row-action-button delete-button"
-                                    data-action="delete"
-                                >
-                                    삭제
-                                </button>
+                                <div class="action-buttons">
+                                    <button
+                                        type="button"
+                                        class="row-action-button edit-button"
+                                        data-action="edit"
+                                    >
+                                        수정
+                                    </button>
+            
+                                    <button
+                                        type="button"
+                                        class="row-action-button delete-button"
+                                        data-action="delete"
+                                    >
+                                        삭제
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
