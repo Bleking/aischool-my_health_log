@@ -24,5 +24,9 @@
 - SQLite
 - CRUD
 
+## ERD
+<img width="785" height="676" alt="헬스케어 ERD" src="https://github.com/user-attachments/assets/60ea255b-c534-4bde-9543-31769c881ce5" />
+
+
 ## 접속 URL
 http://52.78.241.246:8001/
